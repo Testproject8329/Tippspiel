@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>WM 2026 Live-Tippspiel</title>
-    <!-- Tailwind CSS Play CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -22,19 +21,13 @@
             -moz-appearance: textfield;
         }
         
-        /* Erzwingt butterweiches Wischen auf Smartphones für die Runden-Leiste */
+        /* Erzwingt butterweiches Momentum-Wischen auf Smartphones für die Runden-Leiste */
         .scroll-x-touch {
             overflow-x: auto !important;
             -webkit-overflow-scrolling: touch !important;
         }
-
-        /* Schicker, dezenter Scrollbalken-Indikator für die Rundenleiste auf Desktop */
         .scroll-x-touch::-webkit-scrollbar {
-            height: 4px;
-        }
-        .scroll-x-touch::-webkit-scrollbar-thumb {
-            background: #amber-500;
-            border-radius: 10px;
+            display: none;
         }
         
         /* Mobile Input-Optimierung gegen automatischen iOS-Zoom */
@@ -45,7 +38,6 @@
 </head>
 <body class="bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100 font-sans min-h-screen transition-colors duration-300 pb-16">
 
-    <!-- Premium Floating Header -->
     <header class="bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800/80 py-4 px-4 sticky top-0 z-50 shadow-sm transition-colors duration-200">
         <div class="max-w-2xl mx-auto flex justify-between items-center gap-4">
             <div>
@@ -55,7 +47,6 @@
                 </h1>
             </div>
             
-            <!-- Global Utilities -->
             <div class="flex items-center gap-2">
                 <button onclick="toggleTheme()" class="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/50 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all text-sm cursor-pointer shadow-inner">
                     <span class="dark:hidden">🌙</span>
@@ -68,21 +59,16 @@
         </div>
     </header>
 
-    <!-- Segmented Control (iOS Style View Toggle) -->
     <div class="sticky top-[69px] z-40 bg-slate-50/80 dark:bg-slate-950/80 backdrop-blur-md py-3 px-4 border-b border-slate-200/40 dark:border-slate-900/40">
         <div id="player-view-toggle" class="max-w-md mx-auto flex bg-slate-200/60 dark:bg-slate-900 p-1 rounded-2xl border border-slate-300/40 dark:border-slate-800/60 shadow-inner">
-            <!-- Wird dynamisch durch JS befüllt -->
-        </div>
+            </div>
     </div>
 
-    <!-- Toast Banner -->
     <div id="toast" class="fixed bottom-6 left-1/2 transform -translate-x-1/2 translate-y-20 opacity-0 bg-slate-900 text-white dark:bg-white dark:text-slate-900 px-6 py-3.5 rounded-2xl shadow-2xl transition-all duration-300 z-50 font-bold text-xs uppercase tracking-widest flex items-center gap-2.5 border border-white/10">
         <span class="text-emerald-500">✓</span> <span id="toast-text">Kopiert!</span>
     </div>
 
-    <!-- Main Viewport -->
     <main class="max-w-2xl mx-auto p-4 space-y-4">
-        <!-- Spieler-Module -->
         <div id="player-container-0" class="transition-all duration-300"></div>
         <div id="player-container-1" class="transition-all duration-300 hidden"></div>
     </main>
@@ -162,7 +148,7 @@
             
             if (importData) {
                 try {
-                    const decoded = JSON.parse(decodeURIComponent(escape(atob(importData))));
+                    const decoded = JSON.parse(decodeURIComponent(escape(atob(decodeURIComponent(importData)))));
                     decoded.forEach((pData, pIdx) => {
                         state[pIdx].name = pData.n;
                         pData.m.forEach(mData => {
@@ -179,7 +165,7 @@
                     showToast("Ergebnisse importiert!");
                     window.history.replaceState({}, document.title, window.location.pathname);
                     return;
-                } catch(e) { console.error(e); }
+                } catch(e) { console.error("Import Error:", e); }
             }
 
             const local = localStorage.getItem('wm2026_tipp_state_v5');
@@ -195,7 +181,8 @@
                 }))
             }));
             const base64 = btoa(unescape(encodeURIComponent(JSON.stringify(minState))));
-            const shareUrl = window.location.origin + window.location.pathname + '?share=' + base64;
+            // FIX 1: Extrem wichtig für sturmsichere Links auf WhatsApp/Vercel
+            const shareUrl = window.location.origin + window.location.pathname + '?share=' + encodeURIComponent(base64);
             
             navigator.clipboard.writeText(shareUrl).then(() => {
                 showToast("WhatsApp-Link kopiert!");
@@ -292,6 +279,9 @@
         }
 
         function renderApp() {
+            // FIX 2: Speichert die aktive Feld-ID vor dem DOM-Neuaufbau ab
+            const activeInputId = document.activeElement ? document.activeElement.id : null;
+
             updateToggleButtonsOnly();
 
             state.forEach((player, pIdx) => {
@@ -303,11 +293,10 @@
 
                 const container = document.getElementById("player-container-" + pIdx);
                 let html = `
-                    <!-- Profile Card Area -->
                     <div class="bg-slate-100/70 dark:bg-slate-900/60 p-4 rounded-3xl border border-slate-200/60 dark:border-slate-800/60 flex items-center justify-between gap-4 shadow-inner mb-2">
                         <div class="flex-1">
                             <span class="block text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1">Dein Profilname</span>
-                            <input type="text" value="${player.name}" oninput="updatePlayerName(${pIdx}, this.value)" 
+                            <input type="text" id="player-name-field-${pIdx}" value="${player.name}" oninput="updatePlayerName(${pIdx}, this.value)" 
                                 class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl px-4 py-2.5 text-base font-bold text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500/50 w-full transition-all shadow-sm">
                         </div>
                         <div class="bg-gradient-to-br from-emerald-500 to-teal-600 dark:from-emerald-600 dark:to-teal-700 h-[68px] px-5 rounded-2xl shadow-md flex flex-col justify-center items-center min-w-[90px] border border-emerald-400/20">
@@ -316,7 +305,6 @@
                         </div>
                     </div>
                     
-                    <!-- REPARIERTE, WISCHBARE Pill-Leiste (Jetzt mit erzwungenem Touch-Scroll) -->
                     <div class="scroll-x-touch flex gap-2 overflow-x-auto pb-3 pt-1 w-full whitespace-nowrap">
                 `;
 
@@ -334,10 +322,8 @@
                     const isDraw = m.realHome !== '' && m.realAway !== '' && parseInt(m.realHome) === parseInt(m.realAway);
 
                     html += `
-                        <!-- Match Card (Überarbeitet für maximale mobile Ablesbarkeit) -->
                         <div class="bg-white dark:bg-slate-900 rounded-3xl p-5 border border-slate-200/80 dark:border-slate-800/80 shadow-sm space-y-4">
                             
-                            <!-- Card Header -->
                             <div class="flex justify-between items-center text-[10px] uppercase font-bold tracking-widest text-slate-400 dark:text-slate-500 border-b border-slate-100 dark:border-slate-950 pb-2.5">
                                 <span class="bg-slate-100 dark:bg-slate-800/70 text-slate-700 dark:text-slate-400 px-2.5 py-1 rounded-lg border border-slate-200/40 dark:border-slate-700/30">Match #${m.id}</span>
                                 <span class="font-semibold text-slate-500 dark:text-slate-400">${m.date}</span>
@@ -348,7 +334,6 @@
                                 ` : '<span class="text-slate-400 dark:text-slate-600 italic font-medium">Offen</span>'}
                             </div>
                             
-                            <!-- Team-Paarung: RIESIGE FLAGGEN & LÄNDERNAMEN (Stacked Layout verhindert Abschneiden) -->
                             <div class="space-y-3.5 py-1">
                                 <div class="flex items-center gap-4">
                                     <span class="text-3xl sm:text-4xl drop-shadow-sm filter select-none">${teamFlags[m.t1] || "🏳️"}</span>
@@ -360,30 +345,26 @@
                                 </div>
                             </div>
                             
-                            <!-- Eingabe-Bereich: Übersichtlich unter den Ländern positioniert -->
                             <div class="grid grid-cols-2 gap-3 pt-2">
-                                <!-- Dein Tipp -->
                                 <div class="bg-slate-50 dark:bg-slate-950 p-3 rounded-2xl border border-slate-200/60 dark:border-slate-800/60 text-center flex flex-col items-center justify-center shadow-inner">
                                     <span class="block text-[9px] uppercase font-black tracking-wider text-slate-400 dark:text-slate-500 mb-2">Dein Tipp</span>
                                     <div class="flex justify-center items-center gap-2 w-full">
-                                        <input type="number" pattern="[0-9]*" inputmode="numeric" min="0" placeholder="-" value="${m.tipHome !== undefined ? m.tipHome : ''}" oninput="updateMatchValue(${pIdx}, ${m.id}, 'tipHome', this.value)" class="w-14 h-12 bg-white dark:bg-slate-900 text-slate-900 dark:text-amber-400 text-center rounded-xl font-black text-xl focus:outline-none border border-slate-200 dark:border-slate-800/80 focus:ring-2 focus:ring-amber-500/40 transition-all shadow-sm">
+                                        <input type="number" id="input-${pIdx}-${m.id}-tipHome" pattern="[0-9]*" inputmode="numeric" min="0" placeholder="-" value="${m.tipHome !== undefined ? m.tipHome : ''}" oninput="updateMatchValue(${pIdx}, ${m.id}, 'tipHome', this.value)" class="w-14 h-12 bg-white dark:bg-slate-900 text-slate-900 dark:text-amber-400 text-center rounded-xl font-black text-xl focus:outline-none border border-slate-200 dark:border-slate-800/80 focus:ring-2 focus:ring-amber-500/40 transition-all shadow-sm">
                                         <span class="text-slate-300 dark:text-slate-700 font-black text-xl">:</span>
-                                        <input type="number" pattern="[0-9]*" inputmode="numeric" min="0" placeholder="-" value="${m.tipAway !== undefined ? m.tipAway : ''}" oninput="updateMatchValue(${pIdx}, ${m.id}, 'tipAway', this.value)" class="w-14 h-12 bg-white dark:bg-slate-900 text-slate-900 dark:text-amber-400 text-center rounded-xl font-black text-xl focus:outline-none border border-slate-200 dark:border-slate-800/80 focus:ring-2 focus:ring-amber-500/40 transition-all shadow-sm">
+                                        <input type="number" id="input-${pIdx}-${m.id}-tipAway" pattern="[0-9]*" inputmode="numeric" min="0" placeholder="-" value="${m.tipAway !== undefined ? m.tipAway : ''}" oninput="updateMatchValue(${pIdx}, ${m.id}, 'tipAway', this.value)" class="w-14 h-12 bg-white dark:bg-slate-900 text-slate-900 dark:text-amber-400 text-center rounded-xl font-black text-xl focus:outline-none border border-slate-200 dark:border-slate-800/80 focus:ring-2 focus:ring-amber-500/40 transition-all shadow-sm">
                                     </div>
                                 </div>
                                 
-                                <!-- Reales Ergebnis -->
                                 <div class="bg-emerald-500/5 dark:bg-emerald-950/15 p-3 rounded-2xl border border-emerald-100 dark:border-emerald-900/40 text-center flex flex-col items-center justify-center">
                                     <span class="block text-[9px] uppercase font-black tracking-wider text-emerald-600 dark:text-emerald-400 mb-2">Real</span>
                                     <div class="flex justify-center items-center gap-2 w-full">
-                                        <input type="number" pattern="[0-9]*" inputmode="numeric" min="0" placeholder="-" value="${m.realHome !== undefined ? m.realHome : ''}" oninput="updateMatchValue(${pIdx}, ${m.id}, 'realHome', this.value)" class="w-14 h-12 bg-white dark:bg-slate-900 text-slate-900 dark:text-emerald-500 text-center rounded-xl font-black text-xl focus:outline-none border border-slate-200 dark:border-slate-800/80 focus:ring-2 focus:ring-emerald-500/40 transition-all shadow-sm">
+                                        <input type="number" id="input-${pIdx}-${m.id}-realHome" pattern="[0-9]*" inputmode="numeric" min="0" placeholder="-" value="${m.realHome !== undefined ? m.realHome : ''}" oninput="updateMatchValue(${pIdx}, ${m.id}, 'realHome', this.value)" class="w-14 h-12 bg-white dark:bg-slate-900 text-slate-900 dark:text-emerald-500 text-center rounded-xl font-black text-xl focus:outline-none border border-slate-200 dark:border-slate-800/80 focus:ring-2 focus:ring-emerald-500/40 transition-all shadow-sm">
                                         <span class="text-emerald-200 dark:text-emerald-900/60 font-black text-xl">:</span>
-                                        <input type="number" pattern="[0-9]*" inputmode="numeric" min="0" placeholder="-" value="${m.realAway !== undefined ? m.realAway : ''}" oninput="updateMatchValue(${pIdx}, ${m.id}, 'realAway', this.value)" class="w-14 h-12 bg-white dark:bg-slate-900 text-slate-900 dark:text-emerald-500 text-center rounded-xl font-black text-xl focus:outline-none border border-slate-200 dark:border-slate-800/80 focus:ring-2 focus:ring-emerald-500/40 transition-all shadow-sm">
+                                        <input type="number" id="input-${pIdx}-${m.id}-realAway" pattern="[0-9]*" inputmode="numeric" min="0" placeholder="-" value="${m.realAway !== undefined ? m.realAway : ''}" oninput="updateMatchValue(${pIdx}, ${m.id}, 'realAway', this.value)" class="w-14 h-12 bg-white dark:bg-slate-900 text-slate-900 dark:text-emerald-500 text-center rounded-xl font-black text-xl focus:outline-none border border-slate-200 dark:border-slate-800/80 focus:ring-2 focus:ring-emerald-500/40 transition-all shadow-sm">
                                     </div>
                                 </div>
                             </div>
                             
-                            <!-- Bottom Action Control Panel -->
                             <div class="pt-3 border-t border-slate-100 dark:border-slate-950 flex items-center justify-between gap-2 text-xs">
                                 <div class="flex items-center gap-2">
                                     <span class="text-[9px] uppercase font-black tracking-widest text-slate-400">Progression:</span>
@@ -394,10 +375,10 @@
                                 </div>
                                 <div class="text-[11px] max-w-[55%] truncate">
                                     ${m.mode === 'manual' ? `
-                                        <div class="flex items-center gap-1.5 bg-amber-500/5 px-2 py-1 rounded-xl border border-amber-500/10"><span class="text-amber-600 dark:text-amber-400 font-bold text-[10px]">Gewinner:</span><select onchange="updateMatchValue(${pIdx}, ${m.id}, 'manualWinner', this.value)" class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg px-2 py-0.5 text-[11px] text-slate-900 dark:text-amber-400 font-black max-w-[120px] truncate focus:outline-none"><option value="">--</option><option value="t1" ${m.manualWinner==='t1'?'selected':''}>${t1Name}</option><option value="t2" ${m.manualWinner==='t2'?'selected':''}>${t2Name}</option></select></div>
+                                        <div class="flex items-center gap-1.5 bg-amber-500/5 px-2 py-1 rounded-xl border border-amber-500/10"><span class="text-amber-600 dark:text-amber-400 font-bold text-[10px]">Gewinner:</span><select id="select-${pIdx}-${m.id}-manual" onchange="updateMatchValue(${pIdx}, ${m.id}, 'manualWinner', this.value)" class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg px-2 py-0.5 text-[11px] text-slate-900 dark:text-amber-400 font-black max-w-[120px] truncate focus:outline-none"><option value="">--</option><option value="t1" ${m.manualWinner==='t1'?'selected':''}>${t1Name}</option><option value="t2" ${m.manualWinner==='t2'?'selected':''}>${t2Name}</option></select></div>
                                     ` : `
                                         ${isDraw ? `
-                                            <div class="flex items-center gap-1.5 bg-amber-500/10 border border-amber-500/20 px-2 py-1 rounded-xl"><span class="text-amber-500 font-black text-[10px]">⚡ i.E.:</span><select onchange="updateMatchValue(${pIdx}, ${m.id}, 'penaltyWinner', this.value)" class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg px-2 py-0.5 text-[11px] text-slate-900 dark:text-amber-400 font-black max-w-[100px] truncate focus:outline-none"><option value="">--</option><option value="t1" ${m.penaltyWinner==='t1'?'selected':''}>${t1Name}</option><option value="t2" ${m.penaltyWinner==='t2'?'selected':''}>${t2Name}</option></select></div>
+                                            <div class="flex items-center gap-1.5 bg-amber-500/10 border border-amber-500/20 px-2 py-1 rounded-xl"><span class="text-amber-500 font-black text-[10px]">⚡ i.E.:</span><select id="select-${pIdx}-${m.id}-penalty" onchange="updateMatchValue(${pIdx}, ${m.id}, 'penaltyWinner', this.value)" class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg px-2 py-0.5 text-[11px] text-slate-900 dark:text-amber-400 font-black max-w-[100px] truncate focus:outline-none"><option value="">--</option><option value="t1" ${m.penaltyWinner==='t1'?'selected':''}>${t1Name}</option><option value="t2" ${m.penaltyWinner==='t2'?'selected':''}>${t2Name}</option></select></div>
                                         ` : ''}
                                     `}
                                 </div>
@@ -408,6 +389,19 @@
                 html += `</div>`;
                 container.innerHTML = html;
             });
+
+            // FIX 2.1: Fokus-Wiederherstellung nach dem UI-Render-Prozess
+            if (activeInputId) {
+                const elementToFocus = document.getElementById(activeInputId);
+                if (elementToFocus) {
+                    elementToFocus.focus();
+                    // Cursor ans Ende setzen falls es ein Textfeld war
+                    if(elementToFocus.type === "text") {
+                        const len = elementToFocus.value.length;
+                        elementToFocus.setSelectionRange(len, len);
+                    }
+                }
+            }
         }
 
         function getMatchOriginId(currentMatchId, slot) {
@@ -420,11 +414,7 @@
         window.updatePlayerName = function(pIdx, val) {
             state[pIdx].name = val;
             saveToLocalStorage();
-            
-            let totalPoints = 0;
-            state[pIdx].matches.forEach(m => totalPoints += calculateMatchPoints(m));
-            const btn = document.getElementById("toggle-btn-" + pIdx);
-            if (btn) btn.innerHTML = `👤 ${val || 'Tipper ' + (pIdx + 1)} (${totalPoints} P.)`;
+            updateToggleButtonsOnly();
         };
 
         window.setFilter = function(pIdx, filterKey) { state[pIdx].activeFilter = filterKey; renderApp(); };
