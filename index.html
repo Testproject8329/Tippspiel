@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="de" class="dark">
+<html lang="de">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -126,9 +126,16 @@
 
         let activePlayerView = 0;
 
+        // AUTOMATISCHE THEME ENGINE (Erkennt Smartphone-Modus)
         function initTheme() {
-            const savedTheme = localStorage.getItem('theme') || 'dark';
-            document.documentElement.classList.toggle('dark', savedTheme === 'dark');
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme) {
+                document.documentElement.classList.toggle('dark', savedTheme === 'dark');
+            } else {
+                // Falls kein Wert im Speicher liegt -> Passe dich vollautomatisch dem Handy an
+                const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                document.documentElement.classList.toggle('dark', systemPrefersDark);
+            }
         }
 
         window.toggleTheme = function() {
@@ -138,7 +145,7 @@
         }
 
         function saveToLocalStorage() {
-            localStorage.setItem('wm2026_tipp_state_v5', JSON.stringify(state));
+            localStorage.setItem('wm2026_tipp_state_v6', JSON.stringify(state));
         }
 
         function loadInitialState() {
@@ -168,7 +175,7 @@
                 } catch(e) { console.error("Import Error:", e); }
             }
 
-            const local = localStorage.getItem('wm2026_tipp_state_v5');
+            const local = localStorage.getItem('wm2026_tipp_state_v6');
             if (local) { try { state = JSON.parse(local); } catch(e) { console.error(e); } }
         }
 
@@ -181,7 +188,6 @@
                 }))
             }));
             const base64 = btoa(unescape(encodeURIComponent(JSON.stringify(minState))));
-            // FIX 1: Extrem wichtig für sturmsichere Links auf WhatsApp/Vercel
             const shareUrl = window.location.origin + window.location.pathname + '?share=' + encodeURIComponent(base64);
             
             navigator.clipboard.writeText(shareUrl).then(() => {
@@ -278,10 +284,74 @@
             `;
         }
 
-        function renderApp() {
-            // FIX 2: Speichert die aktive Feld-ID vor dem DOM-Neuaufbau ab
-            const activeInputId = document.activeElement ? document.activeElement.id : null;
+        // SURGICAL INPUT ENGINE: Verhindert das Schließen der Handy-Tastatur komplett!
+        window.handleLiveInput = function(input, pIdx, matchId, key) {
+            // Schutzschranke: Maximal 2 Stellen (Verhindert 3-stellige Falscheingaben)
+            if (input.value.length > 2) {
+                input.value = input.value.slice(0, 2);
+            }
+            
+            const match = state[pIdx].matches.find(m => m.id === matchId);
+            if (!match) return;
+            
+            match[key] = input.value;
+            saveToLocalStorage();
+            
+            // Berechnet die Folgerunden geräuschlos im Hintergrund
+            propagateBracket(pIdx);
+            
+            // Injiziert chirurgisch nur die Punkteänderung auf der Karte, ohne das Input-Feld neu zu zeichnen
+            const ptsBadge = document.getElementById(`pts-badge-${pIdx}-${matchId}`);
+            const pts = calculateMatchPoints(match);
+            if (ptsBadge) {
+                if (match.realHome !== '' && match.realAway !== '' && match.realHome !== undefined && match.realAway !== undefined) {
+                    ptsBadge.innerText = `+${pts} Pkt.`;
+                    ptsBadge.className = `px-2.5 py-1 rounded-lg font-black ${
+                        pts === 5 ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' : 
+                        pts === 3 ? 'bg-blue-500/10 text-blue-500' : 
+                        pts === 2 ? 'bg-yellow-500/10 text-yellow-600 dark:text-yellow-500' : 
+                        'bg-rose-500/10 text-rose-500'
+                    }`;
+                } else {
+                    ptsBadge.innerText = 'Offen';
+                    ptsBadge.className = 'text-slate-400 dark:text-slate-600 italic font-medium';
+                }
+            }
+            
+            // Aktualisiert die Live-Punkte im globalen Header
+            let totalPoints = 0;
+            state[pIdx].matches.forEach(m => totalPoints += calculateMatchPoints(m));
+            
+            const totalPtsBadge = document.getElementById(`total-pts-badge-${pIdx}`);
+            if (totalPtsBadge) totalPtsBadge.innerText = totalPoints;
+            
+            const toggleBtn = document.getElementById(`toggle-btn-${pIdx}`);
+            if (toggleBtn) toggleBtn.innerHTML = `👤 ${state[pIdx].name || 'Tipper ' + (pIdx + 1)} (${totalPoints} P.)`;
+            
+            // Blendet das Elfmeter-Menü live ein/aus, falls ein Unentschieden im realen Ergebnis entsteht
+            const extraCtrl = document.getElementById(`extra-ctrl-${pIdx}-${matchId}`);
+            if (extraCtrl && match.mode !== 'manual') {
+                const isDraw = match.realHome !== '' && match.realAway !== '' && parseInt(match.realHome) === parseInt(match.realAway);
+                if (isDraw) {
+                    const t1Name = match.t1 || "Sieger Sp. " + getMatchOriginId(match.id, 't1');
+                    const t2Name = match.t2 || "Sieger Sp. " + getMatchOriginId(match.id, 't2');
+                    extraCtrl.innerHTML = `
+                        <div class="flex items-center gap-1.5 bg-amber-500/10 border border-amber-500/20 px-2 py-1 rounded-xl">
+                            <span class="text-amber-500 font-black text-[10px]">⚡ i.E.:</span>
+                            <select onchange="updateMatchValue(${pIdx}, ${matchId}, 'penaltyWinner', this.value)" class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg px-2 py-0.5 text-[11px] text-slate-900 dark:text-amber-400 font-black max-w-[100px] truncate focus:outline-none">
+                                <option value="">--</option>
+                                <option value="t1" ${match.penaltyWinner==='t1'?'selected':''}>${t1Name}</option>
+                                <option value="t2" ${match.penaltyWinner==='t2'?'selected':''}>${t2Name}</option>
+                            </select>
+                        </div>
+                    `;
+                } else {
+                    extraCtrl.innerHTML = '';
+                }
+            }
+        }
 
+        function renderApp() {
             updateToggleButtonsOnly();
 
             state.forEach((player, pIdx) => {
@@ -301,7 +371,7 @@
                         </div>
                         <div class="bg-gradient-to-br from-emerald-500 to-teal-600 dark:from-emerald-600 dark:to-teal-700 h-[68px] px-5 rounded-2xl shadow-md flex flex-col justify-center items-center min-w-[90px] border border-emerald-400/20">
                             <span class="text-[9px] font-black text-emerald-100 uppercase tracking-wider">Score</span>
-                            <span class="text-2xl font-black text-white leading-none mt-1">${totalPoints}</span>
+                            <span class="text-2xl font-black text-white leading-none mt-1" id="total-pts-badge-${pIdx}">${totalPoints}</span>
                         </div>
                     </div>
                     
@@ -327,11 +397,10 @@
                             <div class="flex justify-between items-center text-[10px] uppercase font-bold tracking-widest text-slate-400 dark:text-slate-500 border-b border-slate-100 dark:border-slate-950 pb-2.5">
                                 <span class="bg-slate-100 dark:bg-slate-800/70 text-slate-700 dark:text-slate-400 px-2.5 py-1 rounded-lg border border-slate-200/40 dark:border-slate-700/30">Match #${m.id}</span>
                                 <span class="font-semibold text-slate-500 dark:text-slate-400">${m.date}</span>
-                                ${m.realHome !== '' && m.realAway !== '' ? `
-                                    <span class="px-2.5 py-1 rounded-lg font-black ${pts === 5 ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' : pts === 3 ? 'bg-blue-500/10 text-blue-500' : pts === 2 ? 'bg-yellow-500/10 text-yellow-600 dark:text-yellow-500' : 'bg-rose-500/10 text-rose-500'}">
-                                        +${pts} Pkt.
-                                    </span>
-                                ` : '<span class="text-slate-400 dark:text-slate-600 italic font-medium">Offen</span>'}
+                                
+                                <span id="pts-badge-${pIdx}-${m.id}" class="px-2.5 py-1 rounded-lg font-black ${m.realHome !== '' && m.realAway !== '' ? (pts === 5 ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' : pts === 3 ? 'bg-blue-500/10 text-blue-500' : pts === 2 ? 'bg-yellow-500/10 text-yellow-600 dark:text-yellow-500' : 'bg-rose-500/10 text-rose-500') : 'text-slate-400 dark:text-slate-600 italic font-medium'}">
+                                    ${m.realHome !== '' && m.realAway !== '' ? `+${pts} Pkt.` : 'Offen'}
+                                </span>
                             </div>
                             
                             <div class="space-y-3.5 py-1">
@@ -349,18 +418,18 @@
                                 <div class="bg-slate-50 dark:bg-slate-950 p-3 rounded-2xl border border-slate-200/60 dark:border-slate-800/60 text-center flex flex-col items-center justify-center shadow-inner">
                                     <span class="block text-[9px] uppercase font-black tracking-wider text-slate-400 dark:text-slate-500 mb-2">Dein Tipp</span>
                                     <div class="flex justify-center items-center gap-2 w-full">
-                                        <input type="number" id="input-${pIdx}-${m.id}-tipHome" pattern="[0-9]*" inputmode="numeric" min="0" placeholder="-" value="${m.tipHome !== undefined ? m.tipHome : ''}" oninput="updateMatchValue(${pIdx}, ${m.id}, 'tipHome', this.value)" class="w-14 h-12 bg-white dark:bg-slate-900 text-slate-900 dark:text-amber-400 text-center rounded-xl font-black text-xl focus:outline-none border border-slate-200 dark:border-slate-800/80 focus:ring-2 focus:ring-amber-500/40 transition-all shadow-sm">
+                                        <input type="number" id="input-${pIdx}-${m.id}-tipHome" pattern="[0-9]*" inputmode="numeric" min="0" max="99" placeholder="-" value="${m.tipHome !== undefined ? m.tipHome : ''}" oninput="handleLiveInput(this, ${pIdx}, ${m.id}, 'tipHome')" class="w-14 h-12 bg-white dark:bg-slate-900 text-slate-900 dark:text-amber-400 text-center rounded-xl font-black text-xl focus:outline-none border border-slate-200 dark:border-slate-800/80 focus:ring-2 focus:ring-amber-500/40 transition-all shadow-sm">
                                         <span class="text-slate-300 dark:text-slate-700 font-black text-xl">:</span>
-                                        <input type="number" id="input-${pIdx}-${m.id}-tipAway" pattern="[0-9]*" inputmode="numeric" min="0" placeholder="-" value="${m.tipAway !== undefined ? m.tipAway : ''}" oninput="updateMatchValue(${pIdx}, ${m.id}, 'tipAway', this.value)" class="w-14 h-12 bg-white dark:bg-slate-900 text-slate-900 dark:text-amber-400 text-center rounded-xl font-black text-xl focus:outline-none border border-slate-200 dark:border-slate-800/80 focus:ring-2 focus:ring-amber-500/40 transition-all shadow-sm">
+                                        <input type="number" id="input-${pIdx}-${m.id}-tipAway" pattern="[0-9]*" inputmode="numeric" min="0" max="99" placeholder="-" value="${m.tipAway !== undefined ? m.tipAway : ''}" oninput="handleLiveInput(this, ${pIdx}, ${m.id}, 'tipAway')" class="w-14 h-12 bg-white dark:bg-slate-900 text-slate-900 dark:text-amber-400 text-center rounded-xl font-black text-xl focus:outline-none border border-slate-200 dark:border-slate-800/80 focus:ring-2 focus:ring-amber-500/40 transition-all shadow-sm">
                                     </div>
                                 </div>
                                 
                                 <div class="bg-emerald-500/5 dark:bg-emerald-950/15 p-3 rounded-2xl border border-emerald-100 dark:border-emerald-900/40 text-center flex flex-col items-center justify-center">
                                     <span class="block text-[9px] uppercase font-black tracking-wider text-emerald-600 dark:text-emerald-400 mb-2">Real</span>
                                     <div class="flex justify-center items-center gap-2 w-full">
-                                        <input type="number" id="input-${pIdx}-${m.id}-realHome" pattern="[0-9]*" inputmode="numeric" min="0" placeholder="-" value="${m.realHome !== undefined ? m.realHome : ''}" oninput="updateMatchValue(${pIdx}, ${m.id}, 'realHome', this.value)" class="w-14 h-12 bg-white dark:bg-slate-900 text-slate-900 dark:text-emerald-500 text-center rounded-xl font-black text-xl focus:outline-none border border-slate-200 dark:border-slate-800/80 focus:ring-2 focus:ring-emerald-500/40 transition-all shadow-sm">
+                                        <input type="number" id="input-${pIdx}-${m.id}-realHome" pattern="[0-9]*" inputmode="numeric" min="0" max="99" placeholder="-" value="${m.realHome !== undefined ? m.realHome : ''}" oninput="handleLiveInput(this, ${pIdx}, ${m.id}, 'realHome')" class="w-14 h-12 bg-white dark:bg-slate-900 text-slate-900 dark:text-emerald-500 text-center rounded-xl font-black text-xl focus:outline-none border border-slate-200 dark:border-slate-800/80 focus:ring-2 focus:ring-emerald-500/40 transition-all shadow-sm">
                                         <span class="text-emerald-200 dark:text-emerald-900/60 font-black text-xl">:</span>
-                                        <input type="number" id="input-${pIdx}-${m.id}-realAway" pattern="[0-9]*" inputmode="numeric" min="0" placeholder="-" value="${m.realAway !== undefined ? m.realAway : ''}" oninput="updateMatchValue(${pIdx}, ${m.id}, 'realAway', this.value)" class="w-14 h-12 bg-white dark:bg-slate-900 text-slate-900 dark:text-emerald-500 text-center rounded-xl font-black text-xl focus:outline-none border border-slate-200 dark:border-slate-800/80 focus:ring-2 focus:ring-emerald-500/40 transition-all shadow-sm">
+                                        <input type="number" id="input-${pIdx}-${m.id}-realAway" pattern="[0-9]*" inputmode="numeric" min="0" max="99" placeholder="-" value="${m.realAway !== undefined ? m.realAway : ''}" oninput="handleLiveInput(this, ${pIdx}, ${m.id}, 'realAway')" class="w-14 h-12 bg-white dark:bg-slate-900 text-slate-900 dark:text-emerald-500 text-center rounded-xl font-black text-xl focus:outline-none border border-slate-200 dark:border-slate-800/80 focus:ring-2 focus:ring-emerald-500/40 transition-all shadow-sm">
                                     </div>
                                 </div>
                             </div>
@@ -373,12 +442,12 @@
                                         <button onclick="updateMatchValue(${pIdx}, ${m.id}, 'mode', 'manual')" class="px-2.5 py-1 text-[9px] uppercase font-black rounded-lg cursor-pointer transition-all ${m.mode === 'manual' ? 'bg-white dark:bg-slate-800 text-slate-950 dark:text-white shadow-sm' : 'text-slate-400 dark:text-slate-500'}">Man.</button>
                                     </div>
                                 </div>
-                                <div class="text-[11px] max-w-[55%] truncate">
+                                <div id="extra-ctrl-${pIdx}-${m.id}" class="text-[11px] max-w-[55%] truncate">
                                     ${m.mode === 'manual' ? `
-                                        <div class="flex items-center gap-1.5 bg-amber-500/5 px-2 py-1 rounded-xl border border-amber-500/10"><span class="text-amber-600 dark:text-amber-400 font-bold text-[10px]">Gewinner:</span><select id="select-${pIdx}-${m.id}-manual" onchange="updateMatchValue(${pIdx}, ${m.id}, 'manualWinner', this.value)" class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg px-2 py-0.5 text-[11px] text-slate-900 dark:text-amber-400 font-black max-w-[120px] truncate focus:outline-none"><option value="">--</option><option value="t1" ${m.manualWinner==='t1'?'selected':''}>${t1Name}</option><option value="t2" ${m.manualWinner==='t2'?'selected':''}>${t2Name}</option></select></div>
+                                        <div class="flex items-center gap-1.5 bg-amber-500/5 px-2 py-1 rounded-xl border border-amber-500/10"><span class="text-amber-600 dark:text-amber-400 font-bold text-[10px]">Gewinner:</span><select onchange="updateMatchValue(${pIdx}, ${m.id}, 'manualWinner', this.value)" class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg px-2 py-0.5 text-[11px] text-slate-900 dark:text-amber-400 font-black max-w-[120px] truncate focus:outline-none"><option value="">--</option><option value="t1" ${m.manualWinner==='t1'?'selected':''}>${t1Name}</option><option value="t2" ${m.manualWinner==='t2'?'selected':''}>${t2Name}</option></select></div>
                                     ` : `
                                         ${isDraw ? `
-                                            <div class="flex items-center gap-1.5 bg-amber-500/10 border border-amber-500/20 px-2 py-1 rounded-xl"><span class="text-amber-500 font-black text-[10px]">⚡ i.E.:</span><select id="select-${pIdx}-${m.id}-penalty" onchange="updateMatchValue(${pIdx}, ${m.id}, 'penaltyWinner', this.value)" class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg px-2 py-0.5 text-[11px] text-slate-900 dark:text-amber-400 font-black max-w-[100px] truncate focus:outline-none"><option value="">--</option><option value="t1" ${m.penaltyWinner==='t1'?'selected':''}>${t1Name}</option><option value="t2" ${m.penaltyWinner==='t2'?'selected':''}>${t2Name}</option></select></div>
+                                            <div class="flex items-center gap-1.5 bg-amber-500/10 border border-amber-500/20 px-2 py-1 rounded-xl"><span class="text-amber-500 font-black text-[10px]">⚡ i.E.:</span><select onchange="updateMatchValue(${pIdx}, ${m.id}, 'penaltyWinner', this.value)" class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg px-2 py-0.5 text-[11px] text-slate-900 dark:text-amber-400 font-black max-w-[100px] truncate focus:outline-none"><option value="">--</option><option value="t1" ${m.penaltyWinner==='t1'?'selected':''}>${t1Name}</option><option value="t2" ${m.penaltyWinner==='t2'?'selected':''}>${t2Name}</option></select></div>
                                         ` : ''}
                                     `}
                                 </div>
@@ -389,19 +458,6 @@
                 html += `</div>`;
                 container.innerHTML = html;
             });
-
-            // FIX 2.1: Fokus-Wiederherstellung nach dem UI-Render-Prozess
-            if (activeInputId) {
-                const elementToFocus = document.getElementById(activeInputId);
-                if (elementToFocus) {
-                    elementToFocus.focus();
-                    // Cursor ans Ende setzen falls es ein Textfeld war
-                    if(elementToFocus.type === "text") {
-                        const len = elementToFocus.value.length;
-                        elementToFocus.setSelectionRange(len, len);
-                    }
-                }
-            }
         }
 
         function getMatchOriginId(currentMatchId, slot) {
@@ -418,9 +474,14 @@
         };
 
         window.setFilter = function(pIdx, filterKey) { state[pIdx].activeFilter = filterKey; renderApp(); };
+        
         window.updateMatchValue = function(pIdx, matchId, key, val) {
             const match = state[pIdx].matches.find(m => m.id === matchId);
-            if (match) { match[key] = val; saveToLocalStorage(); renderApp(); }
+            if (match) { 
+                match[key] = val; 
+                saveToLocalStorage(); 
+                renderApp(); 
+            }
         };
 
         window.onload = function() {
