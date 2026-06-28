@@ -2,67 +2,75 @@
 <html lang="de" class="dark">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WM 2026 K.o.-Phase Tippspiel Pro</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>WM 2026 Tippspiel Mobile Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
-        // Aktiviert den klassenbasierten Darkmode in Tailwind
         tailwind.config = {
             darkMode: 'class'
         }
     </script>
     <style>
-        ::-webkit-scrollbar { width: 8px; }
+        /* Unschöne native Browser-Pfeile bei Nummernfeldern komplett entfernen */
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type="number"] {
+            -moz-appearance: textfield;
+        }
+        
+        ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-        .dark ::webkit-scrollbar-thumb { background: #475569; }
+        .dark ::-webkit-scrollbar-thumb { background: #475569; }
+        
+        /* Input-Optimierung für iOS & Android (verhindert automatisches Zoomen) */
+        input[type="number"], input[type="text"], select {
+            font-size: 16px !important;
+        }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-100 font-sans min-h-screen transition-colors duration-200">
+<body class="bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-100 font-sans min-h-screen transition-colors duration-200 pb-12">
 
-    <header class="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 py-6 px-4 sticky top-0 z-50 shadow-md transition-colors duration-200">
-        <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
-            <div>
-                <h1 class="text-3xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-yellow-500 to-amber-600 dark:from-yellow-400 dark:to-amber-500">
-                    🏆 WM 2026 K.o.-Runden Tippspiel
+    <header class="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 py-4 px-4 sticky top-0 z-50 shadow-md transition-colors duration-200">
+        <div class="max-w-2xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-3">
+            <div class="text-center sm:text-left">
+                <h1 class="text-2xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-yellow-500 to-amber-600 dark:from-yellow-400 dark:to-amber-500">
+                    🏆 WM 2026 Tippspiel
                 </h1>
-                <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Interaktiver Bracket-Planer & Share-Engine (Offline-Sicher)</p>
             </div>
             
-            <div class="flex flex-wrap items-center gap-4">
-                <div class="flex gap-2">
-                    <button onclick="toggleTheme()" class="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-800 transition-all cursor-pointer text-xl" title="Design umschalten">
-                        <span class="dark:hidden">🌙</span>
-                        <span class="hidden dark:inline">☀️</span>
-                    </button>
-                    <button onclick="shareState()" class="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-amber-500 text-slate-950 font-bold hover:bg-amber-400 transition-all cursor-pointer shadow-sm text-sm">
-                        <span>🔗</span> Tipps teilen
-                    </button>
-                </div>
-
-                <div class="flex gap-4 bg-slate-100 dark:bg-slate-950 p-2.5 rounded-xl border border-slate-200 dark:border-slate-700">
-                    <div class="text-center px-3 border-r border-slate-300 dark:border-slate-800">
-                        <span id="lead-name-0" class="block text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase">Tipper 1</span>
-                        <span id="lead-score-0" class="text-lg font-black text-emerald-600 dark:text-emerald-400">0 Pkt.</span>
-                    </div>
-                    <div class="text-center px-3">
-                        <span id="lead-name-1" class="block text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase">Tipper 2</span>
-                        <span id="lead-score-1" class="text-lg font-black text-emerald-600 dark:text-emerald-400">0 Pkt.</span>
-                    </div>
-                </div>
+            <div class="flex items-center gap-2 w-full sm:w-auto justify-center sm:justify-end">
+                <button onclick="toggleTheme()" class="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 hover:bg-slate-200 dark:hover:bg-slate-800 transition-all text-lg cursor-pointer">
+                    <span class="dark:hidden">🌙</span>
+                    <span class="hidden dark:inline">☀️</span>
+                </button>
+                <button onclick="shareState()" class="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-amber-500 text-slate-950 font-bold hover:bg-amber-400 transition-all shadow-sm text-sm cursor-pointer">
+                    <span>🔗</span> Link teilen
+                </button>
             </div>
         </div>
     </header>
 
-    <div id="toast" class="fixed bottom-5 right-5 transform translate-y-20 opacity-0 bg-emerald-600 text-white px-6 py-3 rounded-xl shadow-2xl transition-all duration-300 z-50 font-semibold flex items-center gap-2">
+    <div class="sticky top-[69px] z-40 bg-slate-50/90 dark:bg-slate-900/90 backdrop-blur-md py-3 px-4 border-b border-slate-200 dark:border-slate-800/60">
+        <div id="player-view-toggle" class="max-w-md mx-auto flex bg-slate-200 dark:bg-slate-950 p-1 rounded-xl border border-slate-300 dark:border-slate-800">
+            </div>
+    </div>
+
+    <div class="hidden">
+        <span id="lead-name-0"></span><span id="lead-score-0"></span>
+        <span id="lead-name-1"></span><span id="lead-score-1"></span>
+    </div>
+
+    <div id="toast" class="fixed bottom-5 left-1/2 transform -translate-x-1/2 translate-y-20 opacity-0 bg-emerald-600 text-white px-6 py-3 rounded-xl shadow-2xl transition-all duration-300 z-50 font-semibold flex items-center gap-2 whitespace-nowrap">
         <span>✓</span> <span id="toast-text">Link kopiert!</span>
     </div>
 
-    <main class="max-w-[1600px] mx-auto p-4 lg:p-8">
-        <div class="grid grid-cols-1 xl:grid-cols-2 gap-8">
-            <div id="player-container-0" class="bg-white dark:bg-slate-800/50 rounded-2xl p-4 lg:p-6 border border-slate-200 dark:border-slate-700/60 shadow-xl transition-colors duration-200"></div>
-            <div id="player-container-1" class="bg-white dark:bg-slate-800/50 rounded-2xl p-4 lg:p-6 border border-slate-200 dark:border-slate-700/60 shadow-xl transition-colors duration-200"></div>
-        </div>
+    <main class="max-w-2xl mx-auto p-4">
+        <div id="player-container-0" class="bg-white dark:bg-slate-800/40 rounded-2xl p-4 border border-slate-200 dark:border-slate-800 shadow-lg transition-colors duration-200"></div>
+        <div id="player-container-1" class="bg-white dark:bg-slate-800/40 rounded-2xl p-4 border border-slate-200 dark:border-slate-800 shadow-lg transition-colors duration-200 hidden"></div>
     </main>
 
     <script>
@@ -78,8 +86,7 @@
         };
 
         const roundNames = {
-            'R32': 'Runde der 32', 'R16': 'Achtelfinale', 'QF': 'Viertelfinale',
-            'SF': 'Halbfinale', '3RD': 'Platz 3', 'FINAL': 'Finale'
+            'R32': 'R32', 'R16': 'AF', 'QF': 'VF', 'SF': 'HF', '3RD': 'Pl. 3', 'FINAL': 'Finale'
         };
 
         const initialMatchesData = [
@@ -100,61 +107,48 @@
             { id: 15, round: 'R32', date: 'Fr, 3. Jul, 20:00', t1: 'Australia', t2: 'Egypt' },
             { id: 16, round: 'R32', date: 'Sa, 4. Jul, 00:00', t1: 'Argentina', t2: 'Cabo Verde' },
             
-            // Folgerunden Templates
             ...Array.from({length: 16}, (_, i) => ({ id: 17 + i, round: i < 8 ? 'R16' : i < 12 ? 'QF' : i < 14 ? 'SF' : i === 14 ? '3RD' : 'FINAL', date: 'TBD', t1: '', t2: '' }))
         ];
 
-        // Match-Datenzuordnung korrigieren
-        initialMatchesData[16].date="Sa, 4. Jul, 19:00"; initialMatchesData[17].date="Sa, 4. Jul, 23:00";
-        initialMatchesData[18].date="Di, 7. Jul, 02:00"; initialMatchesData[19].date="Mo, 6. Jul, 21:00";
-        initialMatchesData[20].date="So, 5. Jul, 22:00"; initialMatchesData[21].date="Mo, 6. Jul, 02:00";
-        initialMatchesData[22].date="Di, 7. Jul, 22:00"; initialMatchesData[23].date="Di, 7. Jul, 18:00";
-        initialMatchesData[24].date="Fr, 10. Jul, 20:00"; initialMatchesData[25].date="Fr, 10. Jul, 24:00";
-        initialMatchesData[26].date="Sa, 11. Jul, 20:00"; initialMatchesData[27].date="Sa, 11. Jul, 24:00";
-        initialMatchesData[28].date="Di, 14. Jul, 22:00"; initialMatchesData[29].date="Mi, 15. Jul, 22:00";
-        initialMatchesData[30].date="Sa, 18. Jul, 22:00"; initialMatchesData[31].date="So, 19. Jul, 22:00";
+        initialMatchesData[16].date="Sa, 4. Jul"; initialMatchesData[17].date="Sa, 4. Jul";
+        initialMatchesData[18].date="Di, 7. Jul"; initialMatchesData[19].date="Mo, 6. Jul";
+        initialMatchesData[20].date="So, 5. Jul"; initialMatchesData[21].date="Mo, 6. Jul";
+        initialMatchesData[22].date="Di, 7. Jul"; initialMatchesData[23].date="Di, 7. Jul";
+        initialMatchesData[24].date="Fr, 10. Jul"; initialMatchesData[25].date="Fr, 10. Jul";
+        initialMatchesData[26].date="Sa, 11. Jul"; initialMatchesData[27].date="Sa, 11. Jul";
+        initialMatchesData[28].date="Di, 14. Jul"; initialMatchesData[29].date="Mi, 15. Jul";
+        initialMatchesData[30].date="Sa, 18. Jul"; initialMatchesData[31].date="So, 19. Jul";
 
         let state = [
             { name: "Tipper 1", activeFilter: "R32", matches: JSON.parse(JSON.stringify(initialMatchesData)) },
             { name: "Tipper 2", activeFilter: "R32", matches: JSON.parse(JSON.stringify(initialMatchesData)) }
         ];
 
-        // 1. THEME ENGINE (Light/Dark Mode)
+        let activePlayerView = 0;
+
         function initTheme() {
             const savedTheme = localStorage.getItem('theme') || 'dark';
-            if (savedTheme === 'dark') {
-                document.documentElement.classList.add('dark');
-            } else {
-                document.documentElement.classList.remove('dark');
-            }
+            document.documentElement.classList.toggle('dark', savedTheme === 'dark');
         }
 
         window.toggleTheme = function() {
-            if (document.documentElement.classList.contains('dark')) {
-                document.documentElement.classList.remove('dark');
-                localStorage.setItem('theme', 'light');
-            } else {
-                document.documentElement.classList.add('dark');
-                localStorage.setItem('theme', 'dark');
-            }
+            const isDark = document.documentElement.classList.contains('dark');
+            document.documentElement.classList.toggle('dark', !isDark);
+            localStorage.setItem('theme', !isDark ? 'dark' : 'light');
         }
 
-        // 2. LOCALSTORAGE & IMPORT/EXPORT ENGINE
         function saveToLocalStorage() {
-            localStorage.setItem('wm2026_tipp_state', JSON.stringify(state));
+            localStorage.setItem('wm2026_tipp_state_v3', JSON.stringify(state));
         }
 
         function loadInitialState() {
             initTheme();
-            
-            // Check zuerst, ob Import-Daten in der URL liegen
             const urlParams = new URLSearchParams(window.location.search);
             const importData = urlParams.get('share');
             
             if (importData) {
                 try {
                     const decoded = JSON.parse(decodeURIComponent(escape(atob(importData))));
-                    // Mapping der minimierten URL-Daten zurück in den State
                     decoded.forEach((pData, pIdx) => {
                         state[pIdx].name = pData.n;
                         pData.m.forEach(mData => {
@@ -168,24 +162,17 @@
                         });
                     });
                     saveToLocalStorage();
-                    showToast("Erfolgreich geladen!");
-                    // Bereinige URL, damit beim Neuladen der Query-String verschwindet
+                    showToast("Tipps importiert!");
                     window.history.replaceState({}, document.title, window.location.pathname);
                     return;
-                } catch(e) {
-                    console.error("Import fehlgeschlagen", e);
-                }
+                } catch(e) { console.error(e); }
             }
 
-            // Wenn keine URL-Daten da sind, lade aus dem LocalStorage
-            const local = localStorage.getItem('wm2026_tipp_state');
-            if (local) {
-                try { state = JSON.parse(local); } catch(e) { console.error(e); }
-            }
+            const local = localStorage.getItem('wm2026_tipp_state_v3');
+            if (local) { try { state = JSON.parse(local); } catch(e) { console.error(e); } }
         }
 
         window.shareState = function() {
-            // Minimiere Daten-Struktur für ultrakurze URLs
             const minState = state.map(p => ({
                 n: p.name,
                 m: p.matches.map(m => ({
@@ -193,15 +180,12 @@
                     mo: m.mode||'auto', mw: m.manualWinner||'', pw: m.penaltyWinner||''
                 }))
             }));
-
             const base64 = btoa(unescape(encodeURIComponent(JSON.stringify(minState))));
             const shareUrl = window.location.origin + window.location.pathname + '?share=' + base64;
             
             navigator.clipboard.writeText(shareUrl).then(() => {
                 showToast("Link in Zwischenablage!");
-            }).catch(() => {
-                alert("Kopieren fehlgeschlagen. Nutze diese URL:\n" + shareUrl);
-            });
+            }).catch(() => { alert("URL:\n" + shareUrl); });
         }
 
         function showToast(text) {
@@ -211,7 +195,13 @@
             setTimeout(() => el.classList.add("translate-y-20", "opacity-0"), 2500);
         }
 
-        // 3. K.O.-LOGIK UND BRACKET ENGINE
+        window.setActivePlayerView = function(pIdx) {
+            activePlayerView = pIdx;
+            document.getElementById("player-container-0").classList.toggle("hidden", activePlayerView !== 0);
+            document.getElementById("player-container-1").classList.toggle("hidden", activePlayerView !== 1);
+            renderApp();
+        }
+
         function getNextMatchTarget(matchId) {
             if (matchId >= 1 && matchId <= 16) return { nextId: 16 + Math.ceil(matchId / 2), slot: matchId % 2 === 1 ? 't1' : 't2' };
             if (matchId >= 17 && matchId <= 24) { const rel = matchId - 16; return { nextId: 24 + Math.ceil(rel / 2), slot: rel % 2 === 1 ? 't1' : 't2' }; }
@@ -239,14 +229,14 @@
             for (let i = 1; i <= 32; i++) {
                 const m = matches.find(x => x.id === i);
                 let winner = "", loser = "";
-                const fallbackT1 = m.t1 || "Sieger Sp. " + i;
-                const fallbackT2 = m.t2 || "Sieger Sp. " + i;
+                const fallbackT1 = "Sp. " + getMatchOriginId(i, 't1');
+                const fallbackT2 = "Sp. " + getMatchOriginId(i, 't2');
 
                 if (m.mode === 'manual') {
                     if (m.manualWinner === 't1' && m.t1) winner = m.t1;
                     else if (m.manualWinner === 't2' && m.t2) winner = m.t2;
-                    else winner = m.manualWinner === 't1' ? fallbackT1 : (m.manualWinner === 't2' ? fallbackT2 : "");
-                    if (winner) loser = winner === m.t1 ? fallbackT2 : fallbackT1;
+                    else winner = m.manualWinner === 't1' ? m.t1 || fallbackT1 : (m.manualWinner === 't2' ? m.t2 || fallbackT2 : "");
+                    if (winner) loser = winner === m.t1 ? m.t2 || fallbackT2 : m.t1 || fallbackT1;
                 } else {
                     if (m.realHome !== undefined && m.realAway !== undefined && m.realHome !== '' && m.realAway !== '') {
                         const rh = parseInt(m.realHome), ra = parseInt(m.realAway);
@@ -271,88 +261,115 @@
             }
         }
 
-        // 4. RENDER ENGINE
+        function updateToggleButtonsOnly() {
+            const toggleContainer = document.getElementById("player-view-toggle");
+            let totalPointsP1 = 0, totalPointsP2 = 0;
+            state[0].matches.forEach(m => totalPointsP1 += calculateMatchPoints(m));
+            state[1].matches.forEach(m => totalPointsP2 += calculateMatchPoints(m));
+
+            toggleContainer.innerHTML = `
+                <button onclick="setActivePlayerView(0)" class="flex-1 py-2.5 text-center font-bold rounded-lg transition-all text-xs sm:text-sm cursor-pointer truncate px-2 ${activePlayerView === 0 ? 'bg-amber-500 text-slate-950 shadow-md' : 'text-slate-600 dark:text-slate-400'}">
+                    🏆 ${state[0].name || 'Tipper 1'} (${totalPointsP1} P.)
+                </button>
+                <button onclick="setActivePlayerView(1)" class="flex-1 py-2.5 text-center font-bold rounded-lg transition-all text-xs sm:text-sm cursor-pointer truncate px-2 ${activePlayerView === 1 ? 'bg-amber-500 text-slate-950 shadow-md' : 'text-slate-600 dark:text-slate-400'}">
+                    🏆 ${state[1].name || 'Tipper 2'} (${totalPointsP2} P.)
+                </button>
+            `;
+        }
+
         function renderApp() {
+            updateToggleButtonsOnly();
+
             state.forEach((player, pIdx) => {
                 propagateBracket(pIdx);
                 let totalPoints = 0;
                 player.matches.forEach(m => { totalPoints += calculateMatchPoints(m); });
 
-                document.getElementById("lead-name-" + pIdx).innerText = player.name || "Tipper " + (pIdx + 1);
-                document.getElementById("lead-score-" + pIdx).innerText = totalPoints + " Pkt.";
+                if (pIdx !== activePlayerView) return;
 
                 const container = document.getElementById("player-container-" + pIdx);
                 let html = `
-                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-700 pb-4 mb-6">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 dark:border-slate-800 pb-4 mb-4">
                         <div class="w-full sm:w-auto">
-                            <label class="block text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">Name des Tippers</label>
+                            <label class="block text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">Name des Tippers</label>
                             <input type="text" value="${player.name}" oninput="updatePlayerName(${pIdx}, this.value)" 
-                                class="bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 text-xl font-bold text-slate-900 dark:text-white focus:outline-none focus:border-amber-500 w-full">
+                                class="bg-slate-100 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3 py-2 text-lg font-bold text-slate-900 dark:text-white focus:outline-none focus:border-amber-500 w-full">
                         </div>
-                        <div class="bg-gradient-to-br from-emerald-500 to-teal-600 px-5 py-3 rounded-xl shadow-md text-right min-w-[120px]">
-                            <span class="block text-xs font-medium text-emerald-100 uppercase">Punkte</span>
-                            <span class="text-3xl font-black text-white">${totalPoints}</span>
+                        <div class="bg-emerald-500 dark:bg-emerald-600 px-4 py-2 rounded-xl shadow-sm flex sm:flex-col justify-between items-center sm:justify-center min-w-[100px]">
+                            <span class="text-[10px] font-medium text-emerald-100 uppercase">Punkte</span>
+                            <span class="text-xl font-black text-white">${totalPoints}</span>
                         </div>
                     </div>
-                    <div class="flex flex-wrap gap-1.5 mb-6 bg-slate-200/60 dark:bg-slate-900/60 p-1.5 rounded-xl border border-slate-300 dark:border-slate-800">
+                    
+                    <div class="flex gap-1 overflow-x-auto pb-2 mb-4 scrollbar-none snap-x">
                 `;
 
                 Object.keys(roundNames).forEach(rKey => {
                     const isActive = player.activeFilter === rKey;
-                    html += `<button onclick="setFilter(${pIdx}, '${rKey}')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${isActive ? 'bg-amber-500 text-slate-950 shadow-md' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-300 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white'}">${roundNames[rKey]}</button>`;
+                    html += `<button onclick="setFilter(${pIdx}, '${rKey}')" class="px-3 py-2 rounded-lg text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${isActive ? 'bg-amber-500 text-slate-950 shadow-md' : 'bg-slate-100 dark:bg-slate-950 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-800'}">${roundNames[rKey]}</button>`;
                 });
 
-                html += `</div> <div class="space-y-4 max-h-[65vh] overflow-y-auto pr-2">`;
+                html += `</div> <div class="space-y-4">`;
 
                 player.matches.filter(m => player.activeFilter === m.round).forEach(m => {
                     const pts = calculateMatchPoints(m);
-                    const t1Name = m.t1 || "Sieger Spiel " + getMatchOriginId(m.id, 't1');
-                    const t2Name = m.t2 || "Sieger Spiel " + getMatchOriginId(m.id, 't2');
+                    const t1Name = m.t1 || "Sieger Sp. " + getMatchOriginId(m.id, 't1');
+                    const t2Name = m.t2 || "Sieger Sp. " + getMatchOriginId(m.id, 't2');
                     const isDraw = m.realHome !== '' && m.realAway !== '' && parseInt(m.realHome) === parseInt(m.realAway);
 
                     html += `
-                        <div class="bg-slate-50 dark:bg-slate-900 rounded-xl p-4 border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 transition-all shadow-sm">
-                            <div class="flex justify-between items-center mb-3 text-xs text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800/50 pb-2">
-                                <span class="font-medium bg-slate-200 dark:bg-slate-800 px-2 py-0.5 rounded text-slate-700 dark:text-slate-300">Match #${m.id}</span>
-                                <span>${m.date}</span>
-                                ${m.realHome !== '' && m.realAway !== '' ? `<span class="px-2 py-0.5 rounded font-bold ${pts === 5 ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400' : pts === 3 ? 'bg-blue-500/20 text-blue-600 dark:text-blue-400' : pts === 2 ? 'bg-yellow-500/20 text-yellow-600 dark:text-yellow-400' : 'bg-rose-500/20 text-rose-500'}">+${pts} Pkt.</span>` : '<span class="text-slate-400 dark:text-slate-500 italic text-[11px]">Offen</span>'}
+                        <div class="bg-slate-50 dark:bg-slate-950 rounded-2xl p-4 border border-slate-200 dark:border-slate-800/80 shadow-sm space-y-4">
+                            <div class="flex justify-between items-center text-xs text-slate-400 border-b border-slate-200 dark:border-slate-900 pb-2">
+                                <span class="font-bold bg-slate-200 dark:bg-slate-800 px-2 py-0.5 rounded-md text-slate-700 dark:text-slate-300">Match #${m.id}</span>
+                                <span class="font-medium">${m.date}</span>
+                                ${m.realHome !== '' && m.realAway !== '' ? `<span class="px-2 py-0.5 rounded-md font-bold ${pts === 5 ? 'bg-emerald-500/20 text-emerald-600' : pts === 3 ? 'bg-blue-500/20 text-blue-500' : pts === 2 ? 'bg-yellow-500/20 text-yellow-600' : 'bg-rose-500/20 text-rose-500'}">+${pts} Pkt.</span>` : '<span class="text-slate-400 dark:text-slate-600 italic">Offen</span>'}
                             </div>
-                            <div class="grid grid-cols-1 md:grid-cols-12 gap-3 items-center">
-                                <div class="md:col-span-6 space-y-2.5">
-                                    <div class="flex items-center gap-2.5"><span class="text-xl">${teamFlags[m.t1] || "🏳️"}</span><span class="font-semibold text-sm truncate ${m.t1 ? 'text-slate-900 dark:text-slate-100' : 'text-slate-400 italic'}">${t1Name}</span></div>
-                                    <div class="flex items-center gap-2.5"><span class="text-xl">${teamFlags[m.t2] || "🏳️"}</span><span class="font-semibold text-sm truncate ${m.t2 ? 'text-slate-900 dark:text-slate-100' : 'text-slate-400 italic'}">${t2Name}</span></div>
+                            
+                            <div class="space-y-3">
+                                <div class="flex items-center gap-3">
+                                    <span class="text-2xl">${teamFlags[m.t1] || "🏳️"}</span>
+                                    <span class="font-bold text-sm sm:text-base truncate ${m.t1 ? 'text-slate-900 dark:text-slate-200' : 'text-slate-400 italic font-normal'}">${t1Name}</span>
                                 </div>
-                                <div class="bg-slate-200/40 dark:bg-slate-800/40 p-2 rounded-lg border border-slate-300 dark:border-slate-800 md:col-span-3">
-                                    <span class="block text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 text-center mb-1">Tipp</span>
-                                    <div class="flex justify-center items-center gap-1">
-                                        <input type="number" min="0" placeholder="-" value="${m.tipHome !== undefined ? m.tipHome : ''}" oninput="updateMatchValue(${pIdx}, ${m.id}, 'tipHome', this.value)" class="w-10 h-8 bg-white dark:bg-slate-950 text-slate-900 dark:text-amber-400 text-center rounded font-bold text-sm focus:outline-none border border-slate-300 dark:border-transparent">
-                                        <span class="text-slate-400 font-bold">:</span>
-                                        <input type="number" min="0" placeholder="-" value="${m.tipAway !== undefined ? m.tipAway : ''}" oninput="updateMatchValue(${pIdx}, ${m.id}, 'tipAway', this.value)" class="w-10 h-8 bg-white dark:bg-slate-950 text-slate-900 dark:text-amber-400 text-center rounded font-bold text-sm focus:outline-none border border-slate-300 dark:border-transparent">
-                                    </div>
-                                </div>
-                                <div class="bg-emerald-500/5 dark:bg-emerald-950/20 p-2 rounded-lg border border-emerald-200 dark:border-emerald-900/30 md:col-span-3">
-                                    <span class="block text-[10px] uppercase font-bold text-emerald-600 dark:text-emerald-400 text-center mb-1">Real</span>
-                                    <div class="flex justify-center items-center gap-1">
-                                        <input type="number" min="0" placeholder="-" value="${m.realHome !== undefined ? m.realHome : ''}" oninput="updateMatchValue(${pIdx}, ${m.id}, 'realHome', this.value)" class="w-10 h-8 bg-white dark:bg-slate-950 text-slate-900 dark:text-emerald-400 text-center rounded font-bold text-sm focus:outline-none border border-slate-300 dark:border-transparent">
-                                        <span class="text-emerald-500 font-bold">:</span>
-                                        <input type="number" min="0" placeholder="-" value="${m.realAway !== undefined ? m.realAway : ''}" oninput="updateMatchValue(${pIdx}, ${m.id}, 'realAway', this.value)" class="w-10 h-8 bg-white dark:bg-slate-950 text-slate-900 dark:text-emerald-400 text-center rounded font-bold text-sm focus:outline-none border border-slate-300 dark:border-transparent">
-                                    </div>
+                                <div class="flex items-center gap-3">
+                                    <span class="text-2xl">${teamFlags[m.t2] || "🏳️"}</span>
+                                    <span class="font-bold text-sm sm:text-base truncate ${m.t2 ? 'text-slate-900 dark:text-slate-200' : 'text-slate-400 italic font-normal'}">${t2Name}</span>
                                 </div>
                             </div>
-                            <div class="mt-3 pt-3 border-t border-slate-200 dark:border-slate-800/60 flex flex-wrap items-center justify-between gap-2">
-                                <div class="flex items-center gap-2">
-                                    <span class="text-[11px] text-slate-400 font-medium">Modus:</span>
-                                    <div class="inline-flex rounded-md p-0.5 bg-slate-200 dark:bg-slate-950 border border-slate-300 dark:border-slate-800">
-                                        <button onclick="updateMatchValue(${pIdx}, ${m.id}, 'mode', 'auto')" class="px-2 py-0.5 text-[10px] font-bold rounded cursor-pointer transition-all ${m.mode !== 'manual' ? 'bg-amber-500 text-slate-950' : 'text-slate-500 dark:text-slate-400'}">Auto</button>
-                                        <button onclick="updateMatchValue(${pIdx}, ${m.id}, 'mode', 'manual')" class="px-2 py-0.5 text-[10px] font-bold rounded cursor-pointer transition-all ${m.mode === 'manual' ? 'bg-amber-500 text-slate-950' : 'text-slate-500 dark:text-slate-400'}">Manuell</button>
+                            
+                            <div class="grid grid-cols-2 gap-3 pt-1">
+                                <div class="bg-slate-200/40 dark:bg-slate-900/60 p-3 rounded-xl border border-slate-300 dark:border-slate-800 text-center flex flex-col items-center justify-center">
+                                    <span class="block text-[9px] uppercase font-black tracking-wider text-slate-400 mb-2">Dein Tipp</span>
+                                    <div class="flex justify-center items-center gap-2 w-full">
+                                        <input type="number" pattern="[0-9]*" inputmode="numeric" min="0" placeholder="-" value="${m.tipHome !== undefined ? m.tipHome : ''}" oninput="updateMatchValue(${pIdx}, ${m.id}, 'tipHome', this.value)" class="w-14 h-12 bg-white dark:bg-slate-950 text-slate-900 dark:text-amber-400 text-center rounded-xl font-black text-xl focus:outline-none border border-slate-300 dark:border-slate-800 focus:border-amber-500 dark:focus:border-amber-500 transition-all">
+                                        <span class="text-slate-400 font-bold text-lg">:</span>
+                                        <input type="number" pattern="[0-9]*" inputmode="numeric" min="0" placeholder="-" value="${m.tipAway !== undefined ? m.tipAway : ''}" oninput="updateMatchValue(${pIdx}, ${m.id}, 'tipAway', this.value)" class="w-14 h-12 bg-white dark:bg-slate-950 text-slate-900 dark:text-amber-400 text-center rounded-xl font-black text-xl focus:outline-none border border-slate-300 dark:border-slate-800 focus:border-amber-500 dark:focus:border-amber-500 transition-all">
                                     </div>
                                 </div>
-                                <div class="text-xs">
+                                
+                                <div class="bg-emerald-500/5 dark:bg-emerald-950/20 p-3 rounded-xl border border-emerald-200 dark:border-emerald-900/30 text-center flex flex-col items-center justify-center">
+                                    <span class="block text-[9px] uppercase font-black tracking-wider text-emerald-600 dark:text-emerald-400 mb-2">Real</span>
+                                    <div class="flex justify-center items-center gap-2 w-full">
+                                        <input type="number" pattern="[0-9]*" inputmode="numeric" min="0" placeholder="-" value="${m.realHome !== undefined ? m.realHome : ''}" oninput="updateMatchValue(${pIdx}, ${m.id}, 'realHome', this.value)" class="w-14 h-12 bg-white dark:bg-slate-950 text-slate-900 dark:text-emerald-400 text-center rounded-xl font-black text-xl focus:outline-none border border-slate-300 dark:border-slate-800 focus:border-emerald-500 dark:focus:border-emerald-500 transition-all">
+                                        <span class="text-emerald-500 font-bold text-lg">:</span>
+                                        <input type="number" pattern="[0-9]*" inputmode="numeric" min="0" placeholder="-" value="${m.realAway !== undefined ? m.realAway : ''}" oninput="updateMatchValue(${pIdx}, ${m.id}, 'realAway', this.value)" class="w-14 h-12 bg-white dark:bg-slate-950 text-slate-900 dark:text-emerald-400 text-center rounded-xl font-black text-xl focus:outline-none border border-slate-300 dark:border-slate-800 focus:border-emerald-500 dark:focus:border-emerald-500 transition-all">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="pt-2 border-t border-slate-200 dark:border-slate-900 flex items-center justify-between gap-1.5 text-xs">
+                                <div class="flex items-center gap-1.5">
+                                    <span class="text-[10px] text-slate-400">Modus:</span>
+                                    <div class="inline-flex rounded-lg p-0.5 bg-slate-200 dark:bg-slate-950 border border-slate-300 dark:border-slate-800">
+                                        <button onclick="updateMatchValue(${pIdx}, ${m.id}, 'mode', 'auto')" class="px-2 py-1 text-[10px] font-bold rounded-md cursor-pointer ${m.mode !== 'manual' ? 'bg-amber-500 text-slate-950 shadow-sm' : 'text-slate-500'}">Auto</button>
+                                        <button onclick="updateMatchValue(${pIdx}, ${m.id}, 'mode', 'manual')" class="px-2 py-1 text-[10px] font-bold rounded-md cursor-pointer ${m.mode === 'manual' ? 'bg-amber-500 text-slate-950 shadow-sm' : 'text-slate-500'}">Man.</button>
+                                    </div>
+                                </div>
+                                <div class="text-[11px] max-w-[60%]">
                                     ${m.mode === 'manual' ? `
-                                        <div class="flex items-center gap-1.5"><span class="text-slate-400 text-[11px]">Weiter:</span><select onchange="updateMatchValue(${pIdx}, ${m.id}, 'manualWinner', this.value)" class="bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded px-1.5 py-0.5 text-xs text-slate-900 dark:text-amber-400 font-semibold focus:outline-none"><option value="">-- wählen --</option><option value="t1" ${m.manualWinner==='t1'?'selected':''}>${t1Name}</option><option value="t2" ${m.manualWinner==='t2'?'selected':''}>${t2Name}</option></select></div>
+                                        <div class="flex items-center gap-1"><span class="text-slate-400">Weiter:</span><select onchange="updateMatchValue(${pIdx}, ${m.id}, 'manualWinner', this.value)" class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-lg px-2 py-1 text-[11px] text-slate-900 dark:text-amber-400 font-bold max-w-[110px] truncate focus:outline-none"><option value="">--</option><option value="t1" ${m.manualWinner==='t1'?'selected':''}>${t1Name}</option><option value="t2" ${m.manualWinner==='t2'?'selected':''}>${t2Name}</option></select></div>
                                     ` : `
                                         ${isDraw ? `
-                                            <div class="flex items-center gap-1.5 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded"><span class="text-amber-600 dark:text-amber-400 font-medium text-[11px]">⚡ Elfer:</span><select onchange="updateMatchValue(${pIdx}, ${m.id}, 'penaltyWinner', this.value)" class="bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded px-1.5 py-0.5 text-xs text-slate-900 dark:text-amber-400 font-semibold focus:outline-none"><option value="">-- wählen --</option><option value="t1" ${m.penaltyWinner==='t1'?'selected':''}>${t1Name}</option><option value="t2" ${m.penaltyWinner==='t2'?'selected':''}>${t2Name}</option></select></div>
+                                            <div class="flex items-center gap-1 bg-amber-500/10 border border-amber-500/20 px-2 py-1 rounded-lg"><span class="text-amber-600 dark:text-amber-400 font-black text-[10px]">⚡ i.E.:</span><select onchange="updateMatchValue(${pIdx}, ${m.id}, 'penaltyWinner', this.value)" class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-lg px-1.5 py-0.5 text-[11px] text-slate-900 dark:text-amber-400 font-bold max-w-[90px] truncate focus:outline-none"><option value="">--</option><option value="t1" ${m.penaltyWinner==='t1'?'selected':''}>${t1Name}</option><option value="t2" ${m.penaltyWinner==='t2'?'selected':''}>${t2Name}</option></select></div>
                                         ` : ''}
                                     `}
                                 </div>
@@ -372,7 +389,13 @@
             return slot === 't1' ? 29 : 30;
         }
 
-        window.updatePlayerName = function(pIdx, val) { state[pIdx].name = val; saveToLocalStorage(); renderApp(); };
+        window.updatePlayerName = function(pIdx, val) {
+            state[pIdx].name = val;
+            saveToLocalStorage();
+            // Updatet gezielt nur die Knöpfe und Dashboard-Labels, um den Fokus im Input-Feld nicht zu killen
+            updateToggleButtonsOnly();
+        };
+
         window.setFilter = function(pIdx, filterKey) { state[pIdx].activeFilter = filterKey; renderApp(); };
         window.updateMatchValue = function(pIdx, matchId, key, val) {
             const match = state[pIdx].matches.find(m => m.id === matchId);
