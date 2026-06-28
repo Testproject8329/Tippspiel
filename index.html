@@ -25,6 +25,583 @@
         .scroll-x-touch {
             overflow-x: auto !important;
             -webkit-overflow-scrolling: touch !important;
+            scroll-behavior: smooth;
+        }
+        .scroll-x-touch::-webkit-scrollbar {
+            display: none;
+        }
+        
+        /* Mobile Input-Optimierung gegen automatischen iOS-Zoom */
+        input[type="number"], input[type="text"], select {
+            font-size: 16px !important;
+        }
+
+        /* Hardware-Beschleunigung für das Glas-Scrolling aktivieren */
+        .glass-layer {
+            will-change: transform;
+        }
+    </style>
+</head>
+<body class="bg-slate-200 text-slate-900 dark:bg-slate-950 dark:text-slate-100 font-sans min-h-screen transition-colors duration-500 pb-16 relative overflow-x-hidden">
+
+    <div class="fixed inset-0 -z-10 pointer-events-none bg-[radial-gradient(circle_at_top_left,rgba(245,158,11,0.18),transparent_45%),radial-gradient(circle_at_bottom_right,rgba(16,185,129,0.15),transparent_50%),radial-gradient(circle_at_80%_40%,rgba(6,182,212,0.1),transparent_40%)] dark:bg-[radial-gradient(circle_at_top_left,rgba(245,158,11,0.12),transparent_45%),radial-gradient(circle_at_bottom_right,rgba(16,185,129,0.08),transparent_50%),radial-gradient(circle_at_80%_40%,rgba(6,182,212,0.06),transparent_40%)]"></div>
+
+    <header class="glass-layer bg-white/20 dark:bg-slate-900/20 backdrop-blur-xl border-b border-white/40 dark:border-white/[0.06] py-4 px-4 sticky top-0 z-50 shadow-[0_4px_30px_rgba(0,0,0,0.02)] transition-colors duration-200">
+        <div class="max-w-2xl mx-auto flex justify-between items-center gap-4">
+            <div>
+                <span class="text-[9px] tracking-widest font-black uppercase bg-gradient-to-r from-amber-500 to-orange-500 text-transparent bg-clip-text">World Cup 2026</span>
+                <h1 class="text-xl font-black tracking-tight text-slate-950 dark:text-white">
+                    Knockout-Planer
+                </h1>
+            </div>
+            
+            <div class="flex items-center gap-2">
+                <button onclick="toggleTheme()" class="p-2.5 rounded-xl bg-white/40 dark:bg-slate-800/20 border border-white/50 dark:border-white/[0.06] hover:bg-white/60 dark:hover:bg-slate-800/60 transition-all text-sm cursor-pointer shadow-sm">
+                    <span class="dark:hidden">🌙</span>
+                    <span class="hidden dark:inline">☀️</span>
+                </button>
+                <button onclick="shareState()" class="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 font-black shadow-lg shadow-orange-500/20 hover:brightness-110 transition-all text-xs uppercase tracking-wider cursor-pointer border border-amber-400/20">
+                    <span>🔗</span> Link teilen
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <div class="sticky top-[69px] z-40 bg-slate-200/10 dark:bg-slate-950/10 backdrop-blur-md py-3 px-4 border-b border-white/10 dark:border-white/[0.02]">
+        <div id="player-view-toggle" class="max-w-md mx-auto flex bg-white/10 dark:bg-slate-900/40 p-1 rounded-2xl border border-white/30 dark:border-white/[0.05] shadow-sm">
+            </div>
+    </div>
+
+    <div id="toast" class="fixed bottom-6 left-1/2 transform -translate-x-1/2 translate-y-20 opacity-0 bg-slate-950/80 text-white dark:bg-white/80 dark:text-slate-900 backdrop-blur-xl px-6 py-3.5 rounded-2xl shadow-2xl transition-all duration-300 z-50 font-bold text-xs uppercase tracking-widest flex items-center gap-2.5 border border-white/20 dark:border-slate-800/40">
+        <span class="text-emerald-500">✓</span> <span id="toast-text">Kopiert!</span>
+    </div>
+
+    <main class="max-w-2xl mx-auto p-4 space-y-4">
+        <div id="player-container-0" class="transition-all duration-300"></div>
+        <div id="player-container-1" class="transition-all duration-300 hidden"></div>
+    </main>
+
+    <script>
+        const teamFlags = {
+            "South Africa": "🇿🇦", "Canada": "🇨🇦", "Netherlands": "🇳🇱", "Morocco": "🇲🇦",
+            "Germany": "🇩🇪", "Paraguay": "🇵🇾", "France": "🇫🇷", "Sweden": "🇸🇪",
+            "Belgium": "🇧🇪", "Senegal": "🇸🇳", "USA": "🇺🇸", "Bosnia and Herzegovina": "🇧🇦",
+            "Spain": "🇪🇸", "Austria": "🇦🇹", "Portugal": "🇵🇹", "Croatia": "🇭🇷",
+            "Brazil": "🇧🇷", "Japan": "🇯🇵", "Côte d'Ivoire": "🇨🇮", "Norway": "🇳🇴",
+            "Mexico": "🇲🇽", "Ecuador": "🇪🇨", "England": "🏴󠁧󠁢󠁥󠁮󠁧󠁿", "DR Congo": "🇨🇩",
+            "Switzerland": "🇨🇭", "Algeria": "🇩🇿", "Colombia": "🇨🇴", "Ghana": "🇬🇭",
+            "Australia": "🇦🇺", "Egypt": "🇪🇬", "Argentina": "🇦🇷", "Cabo Verde": "🇨🇻"
+        };
+
+        const roundNames = {
+            'R32': 'Runde der 32', 'R16': 'Achtelfinale', 'QF': 'Viertelfinale', 'SF': 'Halbfinale', '3RD': 'Platz 3', 'FINAL': 'Finale'
+        };
+
+        const initialMatchesData = [
+            { id: 1, round: 'R32', date: 'Heute, 21:00', t1: 'South Africa', t2: 'Canada' },
+            { id: 2, round: 'R32', date: 'Di, 30. Jun, 03:00', t1: 'Netherlands', t2: 'Morocco' },
+            { id: 3, round: 'R32', date: 'Morgen, 22:30', t1: 'Germany', t2: 'Paraguay' },
+            { id: 4, round: 'R32', date: 'Di, 30. Jun, 23:00', t1: 'France', t2: 'Sweden' },
+            { id: 5, round: 'R32', date: 'Mi, 1. Jul, 22:00', t1: 'Belgium', t2: 'Senegal' },
+            { id: 6, round: 'R32', date: 'Do, 2. Jul, 02:00', t1: 'USA', t2: 'Bosnia and Herzegovina' },
+            { id: 7, round: 'R32', date: 'Do, 2. Jul, 21:00', t1: 'Spain', text2: 'Austria' },
+            { id: 8, round: 'R32', date: 'Fr, 3. Jul, 01:00', t1: 'Portugal', t2: 'Croatia' },
+            { id: 9, round: 'R32', date: 'Morgen, 19:00', t1: 'Brazil', t2: 'Japan' },
+            { id: 10, round: 'R32', date: 'Di, 30. Jun, 19:00', t1: "Côte d'Ivoire", t2: 'Norway' },
+            { id: 11, round: 'R32', date: 'Mi, 1. Jul, 03:00', t1: 'Mexico', t2: 'Ecuador' },
+            { id: 12, round: 'R32', date: 'Mi, 1. Jul, 18:00', t1: 'England', t2: 'DR Congo' },
+            { id: 13, round: 'R32', date: 'Fr, 3. Jul, 05:00', t1: 'Switzerland', t2: 'Algeria' },
+            { id: 14, round: 'R32', date: 'Sa, 4. Jul, 03:30', t1: 'Colombia', t2: 'Ghana' },
+            { id: 15, round: 'R32', date: 'Fr, 3. Jul, 20:00', t1: 'Australia', t2: 'Egypt' },
+            { id: 16, round: 'R32', date: 'Sa, 4. Jul, 00:00', t1: 'Argentina', t2: 'Cabo Verde' },
+            
+            ...Array.from({length: 16}, (_, i) => ({ id: 17 + i, round: i < 8 ? 'R16' : i < 12 ? 'QF' : i < 14 ? 'SF' : i === 14 ? '3RD' : 'FINAL', date: 'TBD', t1: '', t2: '' }))
+        ];
+
+        initialMatchesData[16].date="Sa, 4. Jul"; initialMatchesData[17].date="Sa, 4. Jul";
+        initialMatchesData[18].date="Di, 7. Jul"; initialMatchesData[19].date="Mo, 6. Jul";
+        initialMatchesData[20].date="So, 5. Jul"; initialMatchesData[21].date="Mo, 6. Jul";
+        initialMatchesData[22].date="Di, 7. Jul"; initialMatchesData[23].date="Di, 7. Jul";
+        initialMatchesData[24].date="Fr, 10. Jul"; initialMatchesData[25].date="Fr, 10. Jul";
+        initialMatchesData[26].date="Sa, 11. Jul"; initialMatchesData[27].date="Sa, 11. Jul";
+        initialMatchesData[28].date="Di, 14. Jul"; initialMatchesData[29].date="Mi, 15. Jul";
+        initialMatchesData[30].date="Sa, 18. Jul"; initialMatchesData[31].date="So, 19. Jul";
+
+        let state = [
+            { name: "Tipper 1", activeFilter: "R32", matches: JSON.parse(JSON.stringify(initialMatchesData)) },
+            { name: "Tipper 2", activeFilter: "R32", matches: JSON.parse(JSON.stringify(initialMatchesData)) }
+        ];
+
+        let activePlayerView = 0;
+
+        function initTheme() {
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme) {
+                document.documentElement.classList.toggle('dark', savedTheme === 'dark');
+            } else {
+                const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                document.documentElement.classList.toggle('dark', systemPrefersDark);
+            }
+        }
+
+        window.toggleTheme = function() {
+            const isDark = document.documentElement.classList.contains('dark');
+            document.documentElement.classList.toggle('dark', !isDark);
+            localStorage.setItem('theme', !isDark ? 'dark' : 'light');
+        }
+
+        function saveToLocalStorage() {
+            localStorage.setItem('wm2026_tipp_state_v8', JSON.stringify(state));
+        }
+
+        function loadInitialState() {
+            initTheme();
+            const urlParams = new URLSearchParams(window.location.search);
+            let importData = urlParams.get('share');
+            
+            if (importData) {
+                try {
+                    importData = importData.replace(/ /g, '+');
+                    
+                    const binaryStr = atob(importData);
+                    const bytes = new Uint8Array(binaryStr.length);
+                    for (let i = 0; i < binaryStr.length; i++) {
+                        bytes[i] = binaryStr.charCodeAt(i);
+                    }
+                    const jsonStr = new TextDecoder().decode(bytes);
+                    const decoded = JSON.parse(jsonStr);
+                    
+                    decoded.forEach((pData, pIdx) => {
+                        if (state[pIdx]) {
+                            state[pIdx].name = pData.n;
+                            state[pIdx].matches = JSON.parse(JSON.stringify(initialMatchesData));
+                            
+                            pData.m.forEach(mData => {
+                                const match = state[pIdx].matches.find(m => m.id === mData.i);
+                                if (match) {
+                                    if (mData.h !== undefined) match.tipHome = String(mData.h);
+                                    if (mData.a !== undefined) match.tipAway = String(mData.a);
+                                    if (mData.rh !== undefined) match.realHome = String(mData.rh);
+                                    if (mData.ra !== undefined) match.realAway = String(mData.ra);
+                                    if (mData.mo === 'm') match.mode = 'manual';
+                                    if (mData.mw !== undefined) match.manualWinner = mData.mw;
+                                    if (mData.pw !== undefined) match.penaltyWinner = mData.pw;
+                                }
+                            });
+                        }
+                    });
+                    saveToLocalStorage();
+                    showToast("Ergebnisse importiert!");
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                    return;
+                } catch(e) { console.error("Import abgebrochen:", e); }
+            }
+
+            const local = localStorage.getItem('wm2026_tipp_state_v8');
+            if (local) { try { state = JSON.parse(local); } catch(e) { console.error(e); } }
+        }
+
+        window.shareState = function() {
+            const compressed = state.map(p => {
+                const activeMatches = p.matches.filter(m => 
+                    (m.tipHome !== undefined && m.tipHome !== '') || 
+                    (m.tipAway !== undefined && m.tipAway !== '') || 
+                    (m.realHome !== undefined && m.realHome !== '') || 
+                    (m.realAway !== undefined && m.realAway !== '') || 
+                    m.mode === 'manual' || m.penaltyWinner || m.manualWinner
+                ).map(m => {
+                    const obj = { i: m.id };
+                    if (m.tipHome !== undefined && m.tipHome !== '') obj.h = m.tipHome;
+                    if (m.tipAway !== undefined && m.tipAway !== '') obj.a = m.tipAway;
+                    if (m.realHome !== undefined && m.realHome !== '') obj.rh = m.realHome;
+                    if (m.realAway !== undefined && m.realAway !== '') obj.ra = m.realAway;
+                    if (m.mode === 'manual') obj.mo = 'm';
+                    if (m.manualWinner) obj.mw = m.manualWinner;
+                    if (m.penaltyWinner) obj.pw = m.penaltyWinner;
+                    return obj;
+                });
+                return { n: p.name, m: activeMatches };
+            });
+            
+            const jsonStr = JSON.stringify(compressed);
+            const utf8Bytes = new TextEncoder().encode(jsonStr);
+            let binaryStr = "";
+            for (let i = 0; i < utf8Bytes.length; i++) {
+                binaryStr += String.fromCharCode(utf8Bytes[i]);
+            }
+            const base64 = btoa(binaryStr);
+            const shareUrl = window.location.origin + window.location.pathname + '?share=' + encodeURIComponent(base64);
+            
+            navigator.clipboard.writeText(shareUrl).then(() => {
+                showToast("WhatsApp-Link kopiert!");
+            }).catch(() => { alert("URL:\n" + shareUrl); });
+        }
+
+        function showToast(text) {
+            const el = document.getElementById("toast");
+            document.getElementById("toast-text").innerText = text;
+            el.classList.remove("translate-y-20", "opacity-0");
+            setTimeout(() => el.classList.add("translate-y-20", "opacity-0"), 2500);
+        }
+
+        window.setActivePlayerView = function(pIdx) {
+            activePlayerView = pIdx;
+            document.getElementById("player-container-0").classList.toggle("hidden", activePlayerView !== 0);
+            document.getElementById("player-container-1").classList.toggle("hidden", activePlayerView !== 1);
+            renderApp();
+        }
+
+        function getNextMatchTarget(matchId) {
+            if (matchId >= 1 && matchId <= 16) return { nextId: 16 + Math.ceil(matchId / 2), slot: matchId % 2 === 1 ? 't1' : 't2' };
+            if (matchId >= 17 && matchId <= 24) { const rel = matchId - 16; return { nextId: 24 + Math.ceil(rel / 2), slot: rel % 2 === 1 ? 't1' : 't2' }; }
+            if (matchId >= 25 && matchId <= 28) { const rel = matchId - 24; return { nextId: 28 + Math.ceil(rel / 2), slot: rel % 2 === 1 ? 't1' : 't2' }; }
+            if (matchId === 29) return { winnerTarget: { nextId: 32, slot: 't1' }, loserTarget: { nextId: 31, slot: 't1' } };
+            if (matchId === 30) return { winnerTarget: { nextId: 32, slot: 't2' }, loserTarget: { nextId: 31, slot: 't2' } };
+            return null;
+        }
+
+        function calculateMatchPoints(m) {
+            if (m.tipHome === undefined || m.tipAway === undefined || m.realHome === undefined || m.realAway === undefined ||
+                m.tipHome === '' || m.tipAway === '' || m.realHome === '' || m.realAway === '') return 0;
+            const th = parseInt(m.tipHome), ta = parseInt(m.tipAway), rh = parseInt(m.realHome), ra = parseInt(m.realAway);
+            if (th === rh && ta === ra) return 5;
+            if ((th - ta) === (rh - ra)) return 3;
+            if ((th > ta && rh > ra) || (th < ta && rh < ra) || (th === ta && rh === ra)) return 2;
+            return 0;
+        }
+
+        function propagateBracket(pIdx) {
+            const matches = state[pIdx].matches;
+            for (let i = 16; i < matches.length; i++) { matches[i].t1 = ''; matches[i].t2 = ''; }
+            initialMatchesData.filter(d => d.round === 'R32').forEach((m, idx) => { matches[idx].t1 = m.t1; matches[idx].t2 = m.t2; });
+
+            for (let i = 1; i <= 32; i++) {
+                const m = matches.find(x => x.id === i);
+                let winner = "", loser = "";
+                const fallbackT1 = "Sieger Sp. " + getMatchOriginId(i, 't1');
+                const fallbackT2 = "Sieger Sp. " + getMatchOriginId(i, 't2');
+
+                if (m.mode === 'manual') {
+                    if (m.manualWinner === 't1' && m.t1) winner = m.t1;
+                    else if (m.manualWinner === 't2' && m.t2) winner = m.t2;
+                    else winner = m.manualWinner === 't1' ? m.t1 || fallbackT1 : (m.manualWinner === 't2' ? m.t2 || fallbackT2 : "");
+                    if (winner) loser = winner === m.t1 ? m.t2 || fallbackT2 : m.t1 || fallbackT1;
+                } else {
+                    if (m.realHome !== undefined && m.realAway !== undefined && m.realHome !== '' && m.realAway !== '') {
+                        const rh = parseInt(m.realHome), ra = parseInt(m.realAway);
+                        if (rh > ra) { winner = m.t1 || fallbackT1; loser = m.t2 || fallbackT2; }
+                        else if (ra > rh) { winner = m.t2 || fallbackT2; loser = m.t1 || fallbackT1; }
+                        else {
+                            if (m.penaltyWinner === 't1') { winner = m.t1 || fallbackT1; loser = m.t2 || fallbackT2; }
+                            else if (m.penaltyWinner === 't2') { winner = m.t2 || fallbackT2; loser = m.t1 || fallbackT1; }
+                        }
+                    }
+                }
+
+                const targets = getNextMatchTarget(i);
+                if (targets && winner) {
+                    if (targets.nextId) {
+                        matches.find(x => x.id === targets.nextId)[targets.slot] = winner;
+                    } else {
+                        matches.find(x => x.id === targets.winnerTarget.nextId)[targets.winnerTarget.slot] = winner;
+                        if (loser) matches.find(x => x.id === targets.loserTarget.nextId)[targets.loserTarget.slot] = loser;
+                    }
+                }
+            }
+        }
+
+        function updateToggleButtonsOnly() {
+            const toggleContainer = document.getElementById("player-view-toggle");
+            let totalPointsP1 = 0, totalPointsP2 = 0;
+            state[0].matches.forEach(m => totalPointsP1 += calculateMatchPoints(m));
+            state[1].matches.forEach(m => totalPointsP2 += calculateMatchPoints(m));
+
+            toggleContainer.innerHTML = `
+                <button onclick="setActivePlayerView(0)" id="toggle-btn-0" class="flex-1 py-3 text-center font-black rounded-xl transition-all text-xs uppercase tracking-wider cursor-pointer truncate px-2 ${activePlayerView === 0 ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 shadow-md scale-[1.02]' : 'text-slate-500 dark:text-slate-400'}">
+                    👤 ${state[0].name || 'Tipper 1'} (${totalPointsP1} P.)
+                </button>
+                <button onclick="setActivePlayerView(1)" id="toggle-btn-1" class="flex-1 py-3 text-center font-black rounded-xl transition-all text-xs uppercase tracking-wider cursor-pointer truncate px-2 ${activePlayerView === 1 ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 shadow-md scale-[1.02]' : 'text-slate-500 dark:text-slate-400'}">
+                    👤 ${state[1].name || 'Tipper 2'} (${totalPointsP2} P.)
+                </button>
+            `;
+        }
+
+        window.handleLiveInput = function(input, pIdx, matchId, key) {
+            if (input.value.length > 2) input.value = input.value.slice(0, 2);
+            
+            const match = state[pIdx].matches.find(m => m.id === matchId);
+            if (!match) return;
+            
+            match[key] = input.value;
+            saveToLocalStorage();
+            propagateBracket(pIdx);
+            
+            const ptsBadge = document.getElementById(`pts-badge-${pIdx}-${matchId}`);
+            const cardWrapper = document.getElementById(`card-${pIdx}-${matchId}`);
+            const pts = calculateMatchPoints(match);
+            
+            if (ptsBadge && cardWrapper) {
+                if (match.realHome !== '' && match.realAway !== '' && match.realHome !== undefined && match.realAway !== undefined) {
+                    ptsBadge.innerText = `+${pts} Pkt.`;
+                    ptsBadge.className = `px-2.5 py-1 rounded-lg font-black ${
+                        pts === 5 ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30' : 
+                        pts === 3 ? 'bg-blue-500/20 text-blue-500 border border-blue-500/30' : 
+                        pts === 2 ? 'bg-yellow-500/20 text-yellow-600 dark:text-yellow-500 border border-yellow-500/20' : 
+                        'bg-rose-500/20 text-rose-500 border border-rose-500/30'
+                    }`;
+                    cardWrapper.style.boxShadow = pts === 5 ? '0 0 25px rgba(16,185,129,0.15)' : (pts > 0 ? '0 0 25px rgba(59,130,246,0.12)' : '0 0 25px rgba(239,68,68,0.1)');
+                } else {
+                    ptsBadge.innerText = 'Offen';
+                    ptsBadge.className = 'text-slate-500 dark:text-slate-400 italic font-semibold';
+                    cardWrapper.style.boxShadow = 'none';
+                }
+            }
+            
+            let totalPoints = 0;
+            state[pIdx].matches.forEach(m => totalPoints += calculateMatchPoints(m));
+            const totalPtsBadge = document.getElementById(`total-pts-badge-${pIdx}`);
+            if (totalPtsBadge) totalPtsBadge.innerText = totalPoints;
+            
+            const toggleBtn = document.getElementById(`toggle-btn-${pIdx}`);
+            if (toggleBtn) toggleBtn.innerHTML = `👤 ${state[pIdx].name || 'Tipper ' + (pIdx + 1)} (${totalPoints} P.)`;
+            
+            updateProgressBarOnly(pIdx);
+
+            const extraCtrl = document.getElementById(`extra-ctrl-${pIdx}-${matchId}`);
+            if (extraCtrl && match.mode !== 'manual') {
+                const isDraw = match.realHome !== '' && match.realAway !== '' && parseInt(match.realHome) === parseInt(match.realAway);
+                if (isDraw) {
+                    const t1Name = match.t1 || "Sieger Sp. " + getMatchOriginId(match.id, 't1');
+                    const t2Name = match.t2 || "Sieger Sp. " + getMatchOriginId(match.id, 't2');
+                    extraCtrl.innerHTML = `
+                        <div class="flex items-center gap-1.5 bg-amber-500/10 border border-amber-500/20 px-2 py-1 rounded-xl">
+                            <span class="text-amber-500 font-black text-[10px]">⚡ i.E.:</span>
+                            <select onchange="updateMatchValue(${pIdx}, ${matchId}, 'penaltyWinner', this.value)" class="bg-white/40 dark:bg-slate-900/40 border border-white/40 dark:border-slate-800 rounded-lg px-2 py-0.5 text-[11px] text-slate-900 dark:text-amber-400 font-black max-w-[100px] truncate focus:outline-none">
+                                <option value="">--</option>
+                                <option value="t1" ${match.penaltyWinner==='t1'?'selected':''}>${t1Name}</option>
+                                <option value="t2" ${match.penaltyWinner==='t2'?'selected':''}>${t2Name}</option>
+                            </select>
+                        </div>
+                    `;
+                } else {
+                    extraCtrl.innerHTML = '';
+                }
+            }
+        }
+
+        function updateProgressBarOnly(pIdx) {
+            const currentRound = state[pIdx].activeFilter;
+            const roundMatches = state[pIdx].matches.filter(m => m.round === currentRound);
+            const filledCount = roundMatches.filter(m => m.tipHome !== '' && m.tipAway !== '' && m.tipHome !== undefined && m.tipAway !== undefined).length;
+            const percent = roundMatches.length ? Math.round((filledCount / roundMatches.length) * 100) : 0;
+            
+            const bar = document.getElementById(`progress-bar-${pIdx}`);
+            const txt = document.getElementById(`progress-text-${pIdx}`);
+            if (bar) bar.style.width = `${percent}%`;
+            if (txt) txt.innerText = `${percent}% getippt`;
+        }
+
+        function renderApp() {
+            updateToggleButtonsOnly();
+
+            state.forEach((player, pIdx) => {
+                propagateBracket(pIdx);
+                let totalPoints = 0;
+                player.matches.forEach(m => { totalPoints += calculateMatchPoints(m); });
+
+                if (pIdx !== activePlayerView) return;
+
+                const container = document.getElementById("player-container-" + pIdx);
+                let html = `
+                    <div class="glass-layer bg-white/20 dark:bg-white/[0.02] backdrop-blur-2xl p-5 rounded-3xl border border-white/50 dark:border-white/[0.08] shadow-[inset_0_1px_1px_rgba(255,255,255,0.3),0_8px_32px_0_rgba(0,0,0,0.03)] flex flex-col gap-4 mb-3">
+                        <div class="flex items-center justify-between gap-4">
+                            <div class="flex-1">
+                                <span class="block text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1">Dein Profilname</span>
+                                <input type="text" id="player-name-field-${pIdx}" value="${player.name}" oninput="updatePlayerName(${pIdx}, this.value)" 
+                                    class="bg-white/40 dark:bg-black/30 border border-white/40 dark:border-white/[0.08] rounded-2xl px-4 py-2.5 text-base font-bold text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500/40 w-full transition-all shadow-inner">
+                            </div>
+                            <div class="bg-gradient-to-br from-amber-500 to-orange-500 h-[68px] px-5 rounded-2xl shadow-md flex flex-col justify-center items-center min-w-[90px] border border-white/20">
+                                <span class="text-[9px] font-black text-amber-950 uppercase tracking-wider">Score</span>
+                                <span class="text-2xl font-black text-slate-950 leading-none mt-1" id="total-pts-badge-${pIdx}">${totalPoints}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="w-full bg-slate-950/10 dark:bg-black/40 rounded-xl p-2.5 border border-white/20 dark:border-white/[0.03]">
+                            <div class="flex justify-between text-[10px] uppercase font-black tracking-wider mb-1.5 text-slate-500 dark:text-slate-400">
+                                <span>Rundenstatus</span>
+                                <span id="progress-text-${pIdx}">0% getippt</span>
+                            </div>
+                            <div class="w-full bg-slate-300/50 dark:bg-slate-800/60 h-2 rounded-full overflow-hidden p-[1px]">
+                                <div id="progress-bar-${pIdx}" class="bg-gradient-to-r from-amber-500 to-orange-500 h-full rounded-full transition-all duration-500 shadow-[0_0_10px_rgba(245,158,11,0.5)]" style="width: 0%;"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="round-scroll-container-${pIdx}" class="scroll-x-touch flex gap-2 overflow-x-auto pb-3 pt-1 w-full whitespace-nowrap">
+                `;
+
+                Object.keys(roundNames).forEach(rKey => {
+                    const isActive = player.activeFilter === rKey;
+                    // Der aktive Button bekommt eine ID, um ihn ansteuern zu können
+                    const pillId = isActive ? `id="active-pill-${pIdx}"` : '';
+                    html += `<button ${pillId} onclick="setFilter(${pIdx}, '${rKey}')" class="inline-block px-5 py-2.5 rounded-2xl text-xs font-black transition-all cursor-pointer uppercase tracking-wider ${isActive ? 'bg-slate-950 text-white dark:bg-white dark:text-slate-950 shadow-lg scale-105' : 'bg-white/40 dark:bg-white/[0.02] text-slate-600 dark:text-slate-400 border border-white/50 dark:border-white/[0.05]'}" style="box-shadow: ${isActive ? '0 8px 24px rgba(0,0,0,0.15)' : 'none'}">${roundNames[rKey]}</button>`;
+                });
+
+                html += `</div> <div class="space-y-4">`;
+
+                player.matches.filter(m => player.activeFilter === m.round).forEach(m => {
+                    const pts = calculateMatchPoints(m);
+                    const t1Name = m.t1 || "Sieger Sp. " + getMatchOriginId(m.id, 't1');
+                    const t2Name = m.t2 || "Sieger Sp. " + getMatchOriginId(m.id, 't2');
+                    const isDraw = m.realHome !== '' && m.realAway !== '' && parseInt(m.realHome) === parseInt(m.realAway);
+
+                    html += `
+                        <div id="card-${pIdx}-${m.id}" class="glass-layer bg-white/30 dark:bg-white/[0.02] backdrop-blur-2xl rounded-3xl p-5 border border-white/50 dark:border-white/[0.08] shadow-[inset_0_1px_1px_rgba(255,255,255,0.3),0_8px_32px_0_rgba(0,0,0,0.03)] transition-all duration-300 space-y-4">
+                            
+                            <div class="flex justify-between items-center text-[10px] uppercase font-bold tracking-widest text-slate-500 dark:text-slate-400 border-b border-white/10 dark:border-white/[0.04] pb-2.5">
+                                <span class="bg-white/50 dark:bg-white/[0.05] text-slate-800 dark:text-slate-300 px-2.5 py-1 rounded-lg border border-white/40 dark:border-white/[0.05]">Match #${m.id}</span>
+                                <span class="font-bold text-slate-600 dark:text-slate-400">${m.date}</span>
+                                
+                                <span id="pts-badge-${pIdx}-${m.id}" class="px-2.5 py-1 rounded-lg font-black ${m.realHome !== '' && m.realAway !== '' ? (pts === 5 ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30' : pts === 3 ? 'bg-blue-500/20 text-blue-500 border border-blue-500/30' : pts === 2 ? 'bg-yellow-500/20 text-yellow-600 dark:text-yellow-500 border border-yellow-500/20' : 'bg-rose-500/20 text-rose-500 border border-rose-500/30') : 'text-slate-500 dark:text-slate-500 italic font-semibold'}">
+                                    ${m.realHome !== '' && m.realAway !== '' ? `+${pts} Pkt.` : 'Offen'}
+                                </span>
+                            </div>
+                            
+                            <div class="space-y-3">
+                                <div class="grid grid-cols-12 gap-2 text-[9px] uppercase font-black tracking-wider text-slate-400 dark:text-slate-500 text-center">
+                                    <div class="col-span-6 text-left pl-2">Team</div>
+                                    <div class="col-span-3">Tipp</div>
+                                    <div class="col-span-3 text-emerald-600 dark:text-emerald-400">Real</div>
+                                </div>
+
+                                <div class="grid grid-cols-12 gap-2 items-center bg-white/30 dark:bg-black/20 p-2 rounded-2xl border border-white/40 dark:border-white/[0.03]">
+                                    <div class="col-span-6 flex items-center gap-2.5 min-w-0">
+                                        <span class="text-2xl filter drop-shadow-sm select-none shrink-0">${teamFlags[m.t1] || "🏳️"}</span>
+                                        <span class="font-black text-sm sm:text-base tracking-tight text-slate-900 dark:text-white truncate ${m.t1 ? '' : 'text-slate-500/60 dark:text-slate-500/80 italic font-medium'}">${t1Name}</span>
+                                    </div>
+                                    <div class="col-span-3 flex justify-center">
+                                        <input type="number" id="input-${pIdx}-${m.id}-tipHome" pattern="[0-9]*" inputmode="numeric" min="0" max="99" placeholder="-", value="${m.tipHome !== undefined ? m.tipHome : ''}" oninput="handleLiveInput(this, ${pIdx}, ${m.id}, 'tipHome')" class="w-13 h-11 bg-white/70 dark:bg-slate-900/60 text-slate-900 dark:text-amber-400 text-center rounded-xl font-black text-lg focus:outline-none border border-white/50 dark:border-white/[0.1] focus:ring-2 focus:ring-amber-500/40 transition-all shadow-sm">
+                                    </div>
+                                    <div class="col-span-3 flex justify-center">
+                                        <input type="number" id="input-${pIdx}-${m.id}-realHome" pattern="[0-9]*" inputmode="numeric" min="0" max="99" placeholder="-" value="${m.realHome !== undefined ? m.realHome : ''}" oninput="handleLiveInput(this, ${pIdx}, ${m.id}, 'realHome')" class="w-13 h-11 bg-white/70 dark:bg-slate-900/60 text-slate-900 dark:text-emerald-500 text-center rounded-xl font-black text-lg focus:outline-none border border-white/50 dark:border-white/[0.1] focus:ring-2 focus:ring-emerald-500/40 transition-all shadow-sm">
+                                    </div>
+                                </div>
+
+                                <div class="grid grid-cols-12 gap-2 items-center bg-white/30 dark:bg-black/20 p-2 rounded-2xl border border-white/40 dark:border-white/[0.03]">
+                                    <div class="col-span-6 flex items-center gap-2.5 min-w-0">
+                                        <span class="text-2xl filter drop-shadow-sm select-none shrink-0">${teamFlags[m.t2] || "🏳️"}</span>
+                                        <span class="font-black text-sm sm:text-base tracking-tight text-slate-900 dark:text-white truncate ${m.t2 ? '' : 'text-slate-500/60 dark:text-slate-500/80 italic font-medium'}">${t2Name}</span>
+                                    </div>
+                                    <div class="col-span-3 flex justify-center">
+                                        <input type="number" id="input-${pIdx}-${m.id}-tipAway" pattern="[0-9]*" inputmode="numeric" min="0" max="99" placeholder="-", value="${m.tipAway !== undefined ? m.tipAway : ''}" oninput="handleLiveInput(this, ${pIdx}, ${m.id}, 'tipAway')" class="w-13 h-11 bg-white/70 dark:bg-slate-900/60 text-slate-900 dark:text-amber-400 text-center rounded-xl font-black text-lg focus:outline-none border border-white/50 dark:border-white/[0.1] focus:ring-2 focus:ring-amber-500/40 transition-all shadow-sm">
+                                    </div>
+                                    <div class="col-span-3 flex justify-center">
+                                        <input type="number" id="input-${pIdx}-${m.id}-realAway" pattern="[0-9]*" inputmode="numeric" min="0" max="99" placeholder="-" value="${m.realAway !== undefined ? m.realAway : ''}" oninput="handleLiveInput(this, ${pIdx}, ${m.id}, 'realAway')" class="w-13 h-11 bg-white/70 dark:bg-slate-900/60 text-slate-900 dark:text-emerald-500 text-center rounded-xl font-black text-lg focus:outline-none border border-white/50 dark:border-white/[0.1] focus:ring-2 focus:ring-emerald-500/40 transition-all shadow-sm">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="pt-3 border-t border-white/10 dark:border-white/[0.02] flex items-center justify-between gap-2 text-xs">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-[9px] uppercase font-black tracking-widest text-slate-500 dark:text-slate-400">Progression:</span>
+                                    <div class="inline-flex rounded-xl p-0.5 bg-white/40 dark:bg-slate-950/60 border border-white/50 dark:border-slate-800">
+                                        <button onclick="updateMatchValue(${pIdx}, ${m.id}, 'mode', 'auto')" class="px-2.5 py-1 text-[9px] uppercase font-black rounded-lg cursor-pointer transition-all ${m.mode !== 'manual' ? 'bg-white dark:bg-slate-800 text-slate-950 dark:text-white shadow-sm' : 'text-slate-500 dark:text-slate-400'}">Auto</button>
+                                        <button onclick="updateMatchValue(${pIdx}, ${m.id}, 'mode', 'manual')" class="px-2.5 py-1 text-[9px] uppercase font-black rounded-lg cursor-pointer transition-all ${m.mode === 'manual' ? 'bg-white dark:bg-slate-800 text-slate-950 dark:text-white shadow-sm' : 'text-slate-400 dark:text-slate-400'}">Man.</button>
+                                    </div>
+                                </div>
+                                <div id="extra-ctrl-${pIdx}-${m.id}" class="text-[11px] max-w-[55%] truncate">
+                                    ${m.mode === 'manual' ? `
+                                        <div class="flex items-center gap-1.5 bg-amber-500/5 px-2 py-1 rounded-xl border border-amber-500/10"><span class="text-amber-600 dark:text-amber-400 font-bold text-[10px]">Gewinner:</span><select onchange="updateMatchValue(${pIdx}, ${m.id}, 'manualWinner', this.value)" class="bg-white/80 dark:bg-slate-900/80 border border-white/40 dark:border-slate-800 rounded-lg px-2 py-0.5 text-[11px] text-slate-900 dark:text-amber-400 font-black max-w-[120px] truncate focus:outline-none"><option value="">--</option><option value="t1" ${m.manualWinner==='t1'?'selected':''}>${t1Name}</option><option value="t2" ${m.manualWinner==='t2'?'selected':''}>${t2Name}</option></select></div>
+                                    ` : `
+                                        ${isDraw ? `
+                                            <div class="flex items-center gap-1.5 bg-amber-500/10 border border-amber-500/20 px-2 py-1 rounded-xl"><span class="text-amber-500 font-black text-[10px]">⚡ i.E.:</span><select onchange="updateMatchValue(${pIdx}, ${m.id}, 'penaltyWinner', this.value)" class="bg-white/80 dark:bg-slate-900/80 border border-white/40 dark:border-slate-800 rounded-lg px-2 py-0.5 text-[11px] text-slate-900 dark:text-amber-400 font-black max-w-[100px] truncate focus:outline-none"><option value="">--</option><option value="t1" ${m.penaltyWinner==='t1'?'selected':''}>${t1Name}</option><option value="t2" ${m.penaltyWinner==='t2'?'selected':''}>${t2Name}</option></select></div>
+                                        ` : ''}
+                                    `}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                html += `</div>`;
+                container.innerHTML = html;
+                
+                updateProgressBarOnly(pIdx);
+                
+                // AUTOMATISCHER SCROLL-CENTER EFFEKT
+                const activePill = document.getElementById(`active-pill-${pIdx}`);
+                if (activePill) {
+                    activePill.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+                }
+                
+                player.matches.filter(m => player.activeFilter === m.round).forEach(m => {
+                    if (m.realHome !== '' && m.realAway !== '' && m.realHome !== undefined && m.realAway !== undefined) {
+                        const mPts = calculateMatchPoints(m);
+                        const wrap = document.getElementById(`card-${pIdx}-${m.id}`);
+                        if (wrap) {
+                            wrap.style.boxShadow = mPts === 5 ? '0 0 25px rgba(16,185,129,0.15)' : (mPts > 0 ? '0 0 25px rgba(59,130,246,0.12)' : '0 0 25px rgba(239,68,68,0.1)');
+                        }
+                    }
+                });
+            });
+        }
+
+        function getMatchOriginId(currentMatchId, slot) {
+            if (currentMatchId >= 17 && currentMatchId <= 24) return (currentMatchId - 17) * 2 + (slot === 't1' ? 1 : 2);
+            if (currentMatchId >= 25 && currentMatchId <= 28) return 17 + (currentMatchId - 25) * 2 + (slot === 't1' ? 0 : 1);
+            if (currentMatchId >= 29 && currentMatchId <= 30) return 25 + (currentMatchId - 29) * 2 + (slot === 't1' ? 0 : 1);
+            return slot === 't1' ? 29 : 30;
+        }
+
+        window.updatePlayerName = function(pIdx, val) {
+            state[pIdx].name = val;
+            saveToLocalStorage();
+            updateToggleButtonsOnly();
+        };
+
+        window.setFilter = function(pIdx, filterKey) { state[pIdx].activeFilter = filterKey; renderApp(); };
+        
+        window.updateMatchValue = function(pIdx, matchId, key, val) {
+            const match = state[pIdx].matches.find(m => m.id === matchId);
+            if (match) { 
+                match[key] = val; 
+                saveToLocalStorage(); 
+                renderApp(); 
+            }
+        };
+
+        window.onload = function() {
+            loadInitialState();
+            renderApp();
+        };
+    </script>
+</body>
+</html><!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>WM 2026 Live-Tippspiel</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class'
+        }
+    </script>
+    <style>
+        /* Native Browser-Pfeile bei Nummernfeldern restlos entfernen */
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type="number"] {
+            -moz-appearance: textfield;
+        }
+        
+        /* Erzwingt butterweiches Momentum-Wischen auf Smartphones für die Runden-Leiste */
+        .scroll-x-touch {
+            overflow-x: auto !important;
+            -webkit-overflow-scrolling: touch !important;
         }
         .scroll-x-touch::-webkit-scrollbar {
             display: none;
