@@ -153,16 +153,18 @@
             localStorage.setItem('wm2026_tipp_state_v8', JSON.stringify(state));
         }
 
-        // KUGELSICHERE IMPORT-ENGINE (Dekomprimiert verlässliche Kurz-URLs)
+        // KUGELSICHERE IMPORT-ENGINE (Repariert von WhatsApp verpfuschte Leerzeichen)
         function loadInitialState() {
             initTheme();
             const urlParams = new URLSearchParams(window.location.search);
-            const importData = urlParams.get('share');
+            let importData = urlParams.get('share');
             
             if (importData) {
                 try {
-                    const base64 = decodeURIComponent(importData);
-                    const binaryStr = atob(base64);
+                    // FIX: Ersetzt alle falschen Leerzeichen wieder zurück in echte Base64-Pluszeichen
+                    importData = importData.replace(/ /g, '+');
+                    
+                    const binaryStr = atob(importData);
                     const bytes = new Uint8Array(binaryStr.length);
                     for (let i = 0; i < binaryStr.length; i++) {
                         bytes[i] = binaryStr.charCodeAt(i);
@@ -178,10 +180,10 @@
                             pData.m.forEach(mData => {
                                 const match = state[pIdx].matches.find(m => m.id === mData.i);
                                 if (match) {
-                                    if (mData.h !== undefined) match.tipHome = mData.h;
-                                    if (mData.a !== undefined) match.tipAway = mData.a;
-                                    if (mData.rh !== undefined) match.realHome = mData.rh;
-                                    if (mData.ra !== undefined) match.realAway = mData.ra;
+                                    if (mData.h !== undefined) match.tipHome = String(mData.h);
+                                    if (mData.a !== undefined) match.tipAway = String(mData.a);
+                                    if (mData.rh !== undefined) match.realHome = String(mData.rh);
+                                    if (mData.ra !== undefined) match.realAway = String(mData.ra);
                                     if (mData.mo === 'm') match.mode = 'manual';
                                     if (mData.mw !== undefined) match.manualWinner = mData.mw;
                                     if (mData.pw !== undefined) match.penaltyWinner = mData.pw;
@@ -193,14 +195,14 @@
                     showToast("Ergebnisse importiert!");
                     window.history.replaceState({}, document.title, window.location.pathname);
                     return;
-                } catch(e) { console.error("Kritischer Import-Fehler abgefangen:", e); }
+                } catch(e) { console.error("Import abgebrochen:", e); }
             }
 
             const local = localStorage.getItem('wm2026_tipp_state_v8');
             if (local) { try { state = JSON.parse(local); } catch(e) { console.error(e); } }
         }
 
-        // HIGH-COMPRESSION SHARE ENGINE (Macht Links extrem kurz für WhatsApp)
+        // HIGH-COMPRESSION SHARE ENGINE
         window.shareState = function() {
             const compressed = state.map(p => {
                 const activeMatches = p.matches.filter(m => 
@@ -442,7 +444,7 @@
 
                 Object.keys(roundNames).forEach(rKey => {
                     const isActive = player.activeFilter === rKey;
-                    html += `<button onclick="setFilter(${pIdx}, '${rKey}')" class="inline-block px-5 py-2.5 rounded-2xl text-xs font-black transition-all cursor-pointer uppercase tracking-wider ${isActive ? 'bg-slate-950 text-white dark:bg-white dark:text-slate-950 shadow-lg scale-105' : 'bg-white/40 dark:bg-white/[0.02] text-slate-600 dark:text-slate-400 border border-white/50 dark:border-white/[0.05]'}" style="box-shadow: ${isActive ? '0 8px 24px rgba(0,0,0,0.15)' : 'none'}">${roundNames[rKey]}</button>`;
+                    html += `<button onclick="setFilter(${pIdx}, '${rKey}')" class="inline-block px-5 py-2.5 rounded-2xl text-xs font-black transition-all cursor-pointer uppercase tracking-wider ${isActive ? 'bg-slate-955 text-white dark:bg-white dark:text-slate-950 shadow-lg scale-105' : 'bg-white/40 dark:bg-white/[0.02] text-slate-600 dark:text-slate-400 border border-white/50 dark:border-white/[0.05]'}" style="box-shadow: ${isActive ? '0 8px 24px rgba(0,0,0,0.15)' : 'none'}">${roundNames[rKey]}</button>`;
                 });
 
                 html += `</div> <div class="space-y-4">`;
