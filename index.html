@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="de" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WM 2026 K.o.-Phase Tippspiel Pro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        // Aktiviert den klassenbasierten Darkmode in Tailwind
+        tailwind.config = {
+            darkMode: 'class'
+        }
+    </script>
+    <style>
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .dark ::webkit-scrollbar-thumb { background: #475569; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-100 font-sans min-h-screen transition-colors duration-200">
+
+    <header class="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 py-6 px-4 sticky top-0 z-50 shadow-md transition-colors duration-200">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+            <div>
+                <h1 class="text-3xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-yellow-500 to-amber-600 dark:from-yellow-400 dark:to-amber-500">
+                    🏆 WM 2026 K.o.-Runden Tippspiel
+                </h1>
+                <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Interaktiver Bracket-Planer & Share-Engine (Offline-Sicher)</p>
+            </div>
+            
+            <div class="flex flex-wrap items-center gap-4">
+                <div class="flex gap-2">
+                    <button onclick="toggleTheme()" class="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-800 transition-all cursor-pointer text-xl" title="Design umschalten">
+                        <span class="dark:hidden">🌙</span>
+                        <span class="hidden dark:inline">☀️</span>
+                    </button>
+                    <button onclick="shareState()" class="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-amber-500 text-slate-950 font-bold hover:bg-amber-400 transition-all cursor-pointer shadow-sm text-sm">
+                        <span>🔗</span> Tipps teilen
+                    </button>
+                </div>
+
+                <div class="flex gap-4 bg-slate-100 dark:bg-slate-950 p-2.5 rounded-xl border border-slate-200 dark:border-slate-700">
+                    <div class="text-center px-3 border-r border-slate-300 dark:border-slate-800">
+                        <span id="lead-name-0" class="block text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase">Tipper 1</span>
+                        <span id="lead-score-0" class="text-lg font-black text-emerald-600 dark:text-emerald-400">0 Pkt.</span>
+                    </div>
+                    <div class="text-center px-3">
+                        <span id="lead-name-1" class="block text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase">Tipper 2</span>
+                        <span id="lead-score-1" class="text-lg font-black text-emerald-600 dark:text-emerald-400">0 Pkt.</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div id="toast" class="fixed bottom-5 right-5 transform translate-y-20 opacity-0 bg-emerald-600 text-white px-6 py-3 rounded-xl shadow-2xl transition-all duration-300 z-50 font-semibold flex items-center gap-2">
+        <span>✓</span> <span id="toast-text">Link kopiert!</span>
+    </div>
+
+    <main class="max-w-[1600px] mx-auto p-4 lg:p-8">
+        <div class="grid grid-cols-1 xl:grid-cols-2 gap-8">
+            <div id="player-container-0" class="bg-white dark:bg-slate-800/50 rounded-2xl p-4 lg:p-6 border border-slate-200 dark:border-slate-700/60 shadow-xl transition-colors duration-200"></div>
+            <div id="player-container-1" class="bg-white dark:bg-slate-800/50 rounded-2xl p-4 lg:p-6 border border-slate-200 dark:border-slate-700/60 shadow-xl transition-colors duration-200"></div>
+        </div>
+    </main>
+
+    <script>
+        const teamFlags = {
+            "South Africa": "🇿🇦", "Canada": "🇨🇦", "Netherlands": "🇳🇱", "Morocco": "🇲🇦",
+            "Germany": "🇩🇪", "Paraguay": "🇵🇾", "France": "🇫🇷", "Sweden": "🇸🇪",
+            "Belgium": "🇧🇪", "Senegal": "🇸🇳", "USA": "🇺🇸", "Bosnia and Herzegovina": "🇧🇦",
+            "Spain": "🇪🇸", "Austria": "🇦🇹", "Portugal": "🇵🇹", "Croatia": "🇭🇷",
+            "Brazil": "🇧🇷", "Japan": "🇯🇵", "Côte d'Ivoire": "🇨🇮", "Norway": "🇳🇴",
+            "Mexico": "🇲🇽", "Ecuador": "🇪🇨", "England": "🏴󠁧󠁢󠁥󠁮󠁧󠁿", "DR Congo": "🇨🇩",
+            "Switzerland": "🇨🇭", "Algeria": "🇩🇿", "Colombia": "🇨🇴", "Ghana": "🇬🇭",
+            "Australia": "🇦🇺", "Egypt": "🇪🇬", "Argentina": "🇦🇷", "Cabo Verde": "🇨🇻"
+        };
+
+        const roundNames = {
+            'R32': 'Runde der 32', 'R16': 'Achtelfinale', 'QF': 'Viertelfinale',
+            'SF': 'Halbfinale', '3RD': 'Platz 3', 'FINAL': 'Finale'
+        };
+
+        const initialMatchesData = [
+            { id: 1, round: 'R32', date: 'Heute, 21:00', t1: 'South Africa', t2: 'Canada' },
+            { id: 2, round: 'R32', date: 'Di, 30. Jun, 03:00', t1: 'Netherlands', t2: 'Morocco' },
+            { id: 3, round: 'R32', date: 'Morgen, 22:30', t1: 'Germany', t2: 'Paraguay' },
+            { id: 4, round: 'R32', date: 'Di, 30. Jun, 23:00', t1: 'France', t2: 'Sweden' },
+            { id: 5, round: 'R32', date: 'Mi, 1. Jul, 22:00', t1: 'Belgium', t2: 'Senegal' },
+            { id: 6, round: 'R32', date: 'Do, 2. Jul, 02:00', t1: 'USA', t2: 'Bosnia and Herzegovina' },
+            { id: 7, round: 'R32', date: 'Do, 2. Jul, 21:00', t1: 'Spain', t2: 'Austria' },
+            { id: 8, round: 'R32', date: 'Fr, 3. Jul, 01:00', t1: 'Portugal', t2: 'Croatia' },
+            { id: 9, round: 'R32', date: 'Morgen, 19:00', t1: 'Brazil', t2: 'Japan' },
+            { id: 10, round: 'R32', date: 'Di, 30. Jun, 19:00', t1: "Côte d'Ivoire", t2: 'Norway' },
+            { id: 11, round: 'R32', date: 'Mi, 1. Jul, 03:00', t1: 'Mexico', t2: 'Ecuador' },
+            { id: 12, round: 'R32', date: 'Mi, 1. Jul, 18:00', t1: 'England', t2: 'DR Congo' },
+            { id: 13, round: 'R32', date: 'Fr, 3. Jul, 05:00', t1: 'Switzerland', t2: 'Algeria' },
+            { id: 14, round: 'R32', date: 'Sa, 4. Jul, 03:30', t1: 'Colombia', t2: 'Ghana' },
+            { id: 15, round: 'R32', date: 'Fr, 3. Jul, 20:00', t1: 'Australia', t2: 'Egypt' },
+            { id: 16, round: 'R32', date: 'Sa, 4. Jul, 00:00', t1: 'Argentina', t2: 'Cabo Verde' },
+            
+            // Folgerunden Templates
+            ...Array.from({length: 16}, (_, i) => ({ id: 17 + i, round: i < 8 ? 'R16' : i < 12 ? 'QF' : i < 14 ? 'SF' : i === 14 ? '3RD' : 'FINAL', date: 'TBD', t1: '', t2: '' }))
+        ];
+
+        // Match-Datenzuordnung korrigieren
+        initialMatchesData[16].date="Sa, 4. Jul, 19:00"; initialMatchesData[17].date="Sa, 4. Jul, 23:00";
+        initialMatchesData[18].date="Di, 7. Jul, 02:00"; initialMatchesData[19].date="Mo, 6. Jul, 21:00";
+        initialMatchesData[20].date="So, 5. Jul, 22:00"; initialMatchesData[21].date="Mo, 6. Jul, 02:00";
+        initialMatchesData[22].date="Di, 7. Jul, 22:00"; initialMatchesData[23].date="Di, 7. Jul, 18:00";
+        initialMatchesData[24].date="Fr, 10. Jul, 20:00"; initialMatchesData[25].date="Fr, 10. Jul, 24:00";
+        initialMatchesData[26].date="Sa, 11. Jul, 20:00"; initialMatchesData[27].date="Sa, 11. Jul, 24:00";
+        initialMatchesData[28].date="Di, 14. Jul, 22:00"; initialMatchesData[29].date="Mi, 15. Jul, 22:00";
+        initialMatchesData[30].date="Sa, 18. Jul, 22:00"; initialMatchesData[31].date="So, 19. Jul, 22:00";
+
+        let state = [
+            { name: "Tipper 1", activeFilter: "R32", matches: JSON.parse(JSON.stringify(initialMatchesData)) },
+            { name: "Tipper 2", activeFilter: "R32", matches: JSON.parse(JSON.stringify(initialMatchesData)) }
+        ];
+
+        // 1. THEME ENGINE (Light/Dark Mode)
+        function initTheme() {
+            const savedTheme = localStorage.getItem('theme') || 'dark';
+            if (savedTheme === 'dark') {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        }
+
+        window.toggleTheme = function() {
+            if (document.documentElement.classList.contains('dark')) {
+                document.documentElement.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            } else {
+                document.documentElement.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            }
+        }
+
+        // 2. LOCALSTORAGE & IMPORT/EXPORT ENGINE
+        function saveToLocalStorage() {
+            localStorage.setItem('wm2026_tipp_state', JSON.stringify(state));
+        }
+
+        function loadInitialState() {
+            initTheme();
+            
+            // Check zuerst, ob Import-Daten in der URL liegen
+            const urlParams = new URLSearchParams(window.location.search);
+            const importData = urlParams.get('share');
+            
+            if (importData) {
+                try {
+                    const decoded = JSON.parse(decodeURIComponent(escape(atob(importData))));
+                    // Mapping der minimierten URL-Daten zurück in den State
+                    decoded.forEach((pData, pIdx) => {
+                        state[pIdx].name = pData.n;
+                        pData.m.forEach(mData => {
+                            const match = state[pIdx].matches.find(m => m.id === mData.id);
+                            if (match) {
+                                match.tipHome = mData.th; match.tipAway = mData.ta;
+                                match.realHome = mData.rh; match.realAway = mData.ra;
+                                match.mode = mData.mo; match.manualWinner = mData.mw;
+                                match.penaltyWinner = mData.pw;
+                            }
+                        });
+                    });
+                    saveToLocalStorage();
+                    showToast("Erfolgreich geladen!");
+                    // Bereinige URL, damit beim Neuladen der Query-String verschwindet
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                    return;
+                } catch(e) {
+                    console.error("Import fehlgeschlagen", e);
+                }
+            }
+
+            // Wenn keine URL-Daten da sind, lade aus dem LocalStorage
+            const local = localStorage.getItem('wm2026_tipp_state');
+            if (local) {
+                try { state = JSON.parse(local); } catch(e) { console.error(e); }
+            }
+        }
+
+        window.shareState = function() {
+            // Minimiere Daten-Struktur für ultrakurze URLs
+            const minState = state.map(p => ({
+                n: p.name,
+                m: p.matches.map(m => ({
+                    id: m.id, th: m.tipHome||'', ta: m.tipAway||'', rh: m.realHome||'', ra: m.realAway||'',
+                    mo: m.mode||'auto', mw: m.manualWinner||'', pw: m.penaltyWinner||''
+                }))
+            }));
+
+            const base64 = btoa(unescape(encodeURIComponent(JSON.stringify(minState))));
+            const shareUrl = window.location.origin + window.location.pathname + '?share=' + base64;
+            
+            navigator.clipboard.writeText(shareUrl).then(() => {
+                showToast("Link in Zwischenablage!");
+            }).catch(() => {
+                alert("Kopieren fehlgeschlagen. Nutze diese URL:\n" + shareUrl);
+            });
+        }
+
+        function showToast(text) {
+            const el = document.getElementById("toast");
+            document.getElementById("toast-text").innerText = text;
+            el.classList.remove("translate-y-20", "opacity-0");
+            setTimeout(() => el.classList.add("translate-y-20", "opacity-0"), 2500);
+        }
+
+        // 3. K.O.-LOGIK UND BRACKET ENGINE
+        function getNextMatchTarget(matchId) {
+            if (matchId >= 1 && matchId <= 16) return { nextId: 16 + Math.ceil(matchId / 2), slot: matchId % 2 === 1 ? 't1' : 't2' };
+            if (matchId >= 17 && matchId <= 24) { const rel = matchId - 16; return { nextId: 24 + Math.ceil(rel / 2), slot: rel % 2 === 1 ? 't1' : 't2' }; }
+            if (matchId >= 25 && matchId <= 28) { const rel = matchId - 24; return { nextId: 28 + Math.ceil(rel / 2), slot: rel % 2 === 1 ? 't1' : 't2' }; }
+            if (matchId === 29) return { winnerTarget: { nextId: 32, slot: 't1' }, loserTarget: { nextId: 31, slot: 't1' } };
+            if (matchId === 30) return { winnerTarget: { nextId: 32, slot: 't2' }, loserTarget: { nextId: 31, slot: 't2' } };
+            return null;
+        }
+
+        function calculateMatchPoints(m) {
+            if (m.tipHome === undefined || m.tipAway === undefined || m.realHome === undefined || m.realAway === undefined ||
+                m.tipHome === '' || m.tipAway === '' || m.realHome === '' || m.realAway === '') return 0;
+            const th = parseInt(m.tipHome), ta = parseInt(m.tipAway), rh = parseInt(m.realHome), ra = parseInt(m.realAway);
+            if (th === rh && ta === ra) return 5;
+            if ((th - ta) === (rh - ra)) return 3;
+            if ((th > ta && rh > ra) || (th < ta && rh < ra) || (th === ta && rh === ra)) return 2;
+            return 0;
+        }
+
+        function propagateBracket(pIdx) {
+            const matches = state[pIdx].matches;
+            for (let i = 16; i < matches.length; i++) { matches[i].t1 = ''; matches[i].t2 = ''; }
+            initialMatchesData.filter(d => d.round === 'R32').forEach((m, idx) => { matches[idx].t1 = m.t1; matches[idx].t2 = m.t2; });
+
+            for (let i = 1; i <= 32; i++) {
+                const m = matches.find(x => x.id === i);
+                let winner = "", loser = "";
+                const fallbackT1 = m.t1 || "Sieger Sp. " + i;
+                const fallbackT2 = m.t2 || "Sieger Sp. " + i;
+
+                if (m.mode === 'manual') {
+                    if (m.manualWinner === 't1' && m.t1) winner = m.t1;
+                    else if (m.manualWinner === 't2' && m.t2) winner = m.t2;
+                    else winner = m.manualWinner === 't1' ? fallbackT1 : (m.manualWinner === 't2' ? fallbackT2 : "");
+                    if (winner) loser = winner === m.t1 ? fallbackT2 : fallbackT1;
+                } else {
+                    if (m.realHome !== undefined && m.realAway !== undefined && m.realHome !== '' && m.realAway !== '') {
+                        const rh = parseInt(m.realHome), ra = parseInt(m.realAway);
+                        if (rh > ra) { winner = m.t1 || fallbackT1; loser = m.t2 || fallbackT2; }
+                        else if (ra > rh) { winner = m.t2 || fallbackT2; loser = m.t1 || fallbackT1; }
+                        else {
+                            if (m.penaltyWinner === 't1') { winner = m.t1 || fallbackT1; loser = m.t2 || fallbackT2; }
+                            else if (m.penaltyWinner === 't2') { winner = m.t2 || fallbackT2; loser = m.t1 || fallbackT1; }
+                        }
+                    }
+                }
+
+                const targets = getNextMatchTarget(i);
+                if (targets && winner) {
+                    if (targets.nextId) {
+                        matches.find(x => x.id === targets.nextId)[targets.slot] = winner;
+                    } else {
+                        matches.find(x => x.id === targets.winnerTarget.nextId)[targets.winnerTarget.slot] = winner;
+                        if (loser) matches.find(x => x.id === targets.loserTarget.nextId)[targets.loserTarget.slot] = loser;
+                    }
+                }
+            }
+        }
+
+        // 4. RENDER ENGINE
+        function renderApp() {
+            state.forEach((player, pIdx) => {
+                propagateBracket(pIdx);
+                let totalPoints = 0;
+                player.matches.forEach(m => { totalPoints += calculateMatchPoints(m); });
+
+                document.getElementById("lead-name-" + pIdx).innerText = player.name || "Tipper " + (pIdx + 1);
+                document.getElementById("lead-score-" + pIdx).innerText = totalPoints + " Pkt.";
+
+                const container = document.getElementById("player-container-" + pIdx);
+                let html = `
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-700 pb-4 mb-6">
+                        <div class="w-full sm:w-auto">
+                            <label class="block text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">Name des Tippers</label>
+                            <input type="text" value="${player.name}" oninput="updatePlayerName(${pIdx}, this.value)" 
+                                class="bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 text-xl font-bold text-slate-900 dark:text-white focus:outline-none focus:border-amber-500 w-full">
+                        </div>
+                        <div class="bg-gradient-to-br from-emerald-500 to-teal-600 px-5 py-3 rounded-xl shadow-md text-right min-w-[120px]">
+                            <span class="block text-xs font-medium text-emerald-100 uppercase">Punkte</span>
+                            <span class="text-3xl font-black text-white">${totalPoints}</span>
+                        </div>
+                    </div>
+                    <div class="flex flex-wrap gap-1.5 mb-6 bg-slate-200/60 dark:bg-slate-900/60 p-1.5 rounded-xl border border-slate-300 dark:border-slate-800">
+                `;
+
+                Object.keys(roundNames).forEach(rKey => {
+                    const isActive = player.activeFilter === rKey;
+                    html += `<button onclick="setFilter(${pIdx}, '${rKey}')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${isActive ? 'bg-amber-500 text-slate-950 shadow-md' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-300 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white'}">${roundNames[rKey]}</button>`;
+                });
+
+                html += `</div> <div class="space-y-4 max-h-[65vh] overflow-y-auto pr-2">`;
+
+                player.matches.filter(m => player.activeFilter === m.round).forEach(m => {
+                    const pts = calculateMatchPoints(m);
+                    const t1Name = m.t1 || "Sieger Spiel " + getMatchOriginId(m.id, 't1');
+                    const t2Name = m.t2 || "Sieger Spiel " + getMatchOriginId(m.id, 't2');
+                    const isDraw = m.realHome !== '' && m.realAway !== '' && parseInt(m.realHome) === parseInt(m.realAway);
+
+                    html += `
+                        <div class="bg-slate-50 dark:bg-slate-900 rounded-xl p-4 border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 transition-all shadow-sm">
+                            <div class="flex justify-between items-center mb-3 text-xs text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800/50 pb-2">
+                                <span class="font-medium bg-slate-200 dark:bg-slate-800 px-2 py-0.5 rounded text-slate-700 dark:text-slate-300">Match #${m.id}</span>
+                                <span>${m.date}</span>
+                                ${m.realHome !== '' && m.realAway !== '' ? `<span class="px-2 py-0.5 rounded font-bold ${pts === 5 ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400' : pts === 3 ? 'bg-blue-500/20 text-blue-600 dark:text-blue-400' : pts === 2 ? 'bg-yellow-500/20 text-yellow-600 dark:text-yellow-400' : 'bg-rose-500/20 text-rose-500'}">+${pts} Pkt.</span>` : '<span class="text-slate-400 dark:text-slate-500 italic text-[11px]">Offen</span>'}
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-12 gap-3 items-center">
+                                <div class="md:col-span-6 space-y-2.5">
+                                    <div class="flex items-center gap-2.5"><span class="text-xl">${teamFlags[m.t1] || "🏳️"}</span><span class="font-semibold text-sm truncate ${m.t1 ? 'text-slate-900 dark:text-slate-100' : 'text-slate-400 italic'}">${t1Name}</span></div>
+                                    <div class="flex items-center gap-2.5"><span class="text-xl">${teamFlags[m.t2] || "🏳️"}</span><span class="font-semibold text-sm truncate ${m.t2 ? 'text-slate-900 dark:text-slate-100' : 'text-slate-400 italic'}">${t2Name}</span></div>
+                                </div>
+                                <div class="bg-slate-200/40 dark:bg-slate-800/40 p-2 rounded-lg border border-slate-300 dark:border-slate-800 md:col-span-3">
+                                    <span class="block text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 text-center mb-1">Tipp</span>
+                                    <div class="flex justify-center items-center gap-1">
+                                        <input type="number" min="0" placeholder="-" value="${m.tipHome !== undefined ? m.tipHome : ''}" oninput="updateMatchValue(${pIdx}, ${m.id}, 'tipHome', this.value)" class="w-10 h-8 bg-white dark:bg-slate-950 text-slate-900 dark:text-amber-400 text-center rounded font-bold text-sm focus:outline-none border border-slate-300 dark:border-transparent">
+                                        <span class="text-slate-400 font-bold">:</span>
+                                        <input type="number" min="0" placeholder="-" value="${m.tipAway !== undefined ? m.tipAway : ''}" oninput="updateMatchValue(${pIdx}, ${m.id}, 'tipAway', this.value)" class="w-10 h-8 bg-white dark:bg-slate-950 text-slate-900 dark:text-amber-400 text-center rounded font-bold text-sm focus:outline-none border border-slate-300 dark:border-transparent">
+                                    </div>
+                                </div>
+                                <div class="bg-emerald-500/5 dark:bg-emerald-950/20 p-2 rounded-lg border border-emerald-200 dark:border-emerald-900/30 md:col-span-3">
+                                    <span class="block text-[10px] uppercase font-bold text-emerald-600 dark:text-emerald-400 text-center mb-1">Real</span>
+                                    <div class="flex justify-center items-center gap-1">
+                                        <input type="number" min="0" placeholder="-" value="${m.realHome !== undefined ? m.realHome : ''}" oninput="updateMatchValue(${pIdx}, ${m.id}, 'realHome', this.value)" class="w-10 h-8 bg-white dark:bg-slate-950 text-slate-900 dark:text-emerald-400 text-center rounded font-bold text-sm focus:outline-none border border-slate-300 dark:border-transparent">
+                                        <span class="text-emerald-500 font-bold">:</span>
+                                        <input type="number" min="0" placeholder="-" value="${m.realAway !== undefined ? m.realAway : ''}" oninput="updateMatchValue(${pIdx}, ${m.id}, 'realAway', this.value)" class="w-10 h-8 bg-white dark:bg-slate-950 text-slate-900 dark:text-emerald-400 text-center rounded font-bold text-sm focus:outline-none border border-slate-300 dark:border-transparent">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mt-3 pt-3 border-t border-slate-200 dark:border-slate-800/60 flex flex-wrap items-center justify-between gap-2">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-[11px] text-slate-400 font-medium">Modus:</span>
+                                    <div class="inline-flex rounded-md p-0.5 bg-slate-200 dark:bg-slate-950 border border-slate-300 dark:border-slate-800">
+                                        <button onclick="updateMatchValue(${pIdx}, ${m.id}, 'mode', 'auto')" class="px-2 py-0.5 text-[10px] font-bold rounded cursor-pointer transition-all ${m.mode !== 'manual' ? 'bg-amber-500 text-slate-950' : 'text-slate-500 dark:text-slate-400'}">Auto</button>
+                                        <button onclick="updateMatchValue(${pIdx}, ${m.id}, 'mode', 'manual')" class="px-2 py-0.5 text-[10px] font-bold rounded cursor-pointer transition-all ${m.mode === 'manual' ? 'bg-amber-500 text-slate-950' : 'text-slate-500 dark:text-slate-400'}">Manuell</button>
+                                    </div>
+                                </div>
+                                <div class="text-xs">
+                                    ${m.mode === 'manual' ? `
+                                        <div class="flex items-center gap-1.5"><span class="text-slate-400 text-[11px]">Weiter:</span><select onchange="updateMatchValue(${pIdx}, ${m.id}, 'manualWinner', this.value)" class="bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded px-1.5 py-0.5 text-xs text-slate-900 dark:text-amber-400 font-semibold focus:outline-none"><option value="">-- wählen --</option><option value="t1" ${m.manualWinner==='t1'?'selected':''}>${t1Name}</option><option value="t2" ${m.manualWinner==='t2'?'selected':''}>${t2Name}</option></select></div>
+                                    ` : `
+                                        ${isDraw ? `
+                                            <div class="flex items-center gap-1.5 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded"><span class="text-amber-600 dark:text-amber-400 font-medium text-[11px]">⚡ Elfer:</span><select onchange="updateMatchValue(${pIdx}, ${m.id}, 'penaltyWinner', this.value)" class="bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded px-1.5 py-0.5 text-xs text-slate-900 dark:text-amber-400 font-semibold focus:outline-none"><option value="">-- wählen --</option><option value="t1" ${m.penaltyWinner==='t1'?'selected':''}>${t1Name}</option><option value="t2" ${m.penaltyWinner==='t2'?'selected':''}>${t2Name}</option></select></div>
+                                        ` : ''}
+                                    `}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                html += `</div>`;
+                container.innerHTML = html;
+            });
+        }
+
+        function getMatchOriginId(currentMatchId, slot) {
+            if (currentMatchId >= 17 && currentMatchId <= 24) return (currentMatchId - 17) * 2 + (slot === 't1' ? 1 : 2);
+            if (currentMatchId >= 25 && currentMatchId <= 28) return 17 + (currentMatchId - 25) * 2 + (slot === 't1' ? 0 : 1);
+            if (currentMatchId >= 29 && currentMatchId <= 30) return 25 + (currentMatchId - 29) * 2 + (slot === 't1' ? 0 : 1);
+            return slot === 't1' ? 29 : 30;
+        }
+
+        window.updatePlayerName = function(pIdx, val) { state[pIdx].name = val; saveToLocalStorage(); renderApp(); };
+        window.setFilter = function(pIdx, filterKey) { state[pIdx].activeFilter = filterKey; renderApp(); };
+        window.updateMatchValue = function(pIdx, matchId, key, val) {
+            const match = state[pIdx].matches.find(m => m.id === matchId);
+            if (match) { match[key] = val; saveToLocalStorage(); renderApp(); }
+        };
+
+        window.onload = function() {
+            loadInitialState();
+            renderApp();
+        };
+    </script>
+</body>
+</html>
