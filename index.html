@@ -153,7 +153,6 @@
             localStorage.setItem('wm2026_tipp_state_v8', JSON.stringify(state));
         }
 
-        // KUGELSICHERE IMPORT-ENGINE (Repariert von WhatsApp verpfuschte Leerzeichen)
         function loadInitialState() {
             initTheme();
             const urlParams = new URLSearchParams(window.location.search);
@@ -161,7 +160,6 @@
             
             if (importData) {
                 try {
-                    // FIX: Ersetzt alle falschen Leerzeichen wieder zurück in echte Base64-Pluszeichen
                     importData = importData.replace(/ /g, '+');
                     
                     const binaryStr = atob(importData);
@@ -202,7 +200,6 @@
             if (local) { try { state = JSON.parse(local); } catch(e) { console.error(e); } }
         }
 
-        // HIGH-COMPRESSION SHARE ENGINE
         window.shareState = function() {
             const compressed = state.map(p => {
                 const activeMatches = p.matches.filter(m => 
@@ -444,7 +441,7 @@
 
                 Object.keys(roundNames).forEach(rKey => {
                     const isActive = player.activeFilter === rKey;
-                    html += `<button onclick="setFilter(${pIdx}, '${rKey}')" class="inline-block px-5 py-2.5 rounded-2xl text-xs font-black transition-all cursor-pointer uppercase tracking-wider ${isActive ? 'bg-slate-955 text-white dark:bg-white dark:text-slate-950 shadow-lg scale-105' : 'bg-white/40 dark:bg-white/[0.02] text-slate-600 dark:text-slate-400 border border-white/50 dark:border-white/[0.05]'}" style="box-shadow: ${isActive ? '0 8px 24px rgba(0,0,0,0.15)' : 'none'}">${roundNames[rKey]}</button>`;
+                    html += `<button onclick="setFilter(${pIdx}, '${rKey}')" class="inline-block px-5 py-2.5 rounded-2xl text-xs font-black transition-all cursor-pointer uppercase tracking-wider ${isActive ? 'bg-slate-950 text-white dark:bg-white dark:text-slate-950 shadow-lg scale-105' : 'bg-white/40 dark:bg-white/[0.02] text-slate-600 dark:text-slate-400 border border-white/50 dark:border-white/[0.05]'}" style="box-shadow: ${isActive ? '0 8px 24px rgba(0,0,0,0.15)' : 'none'}">${roundNames[rKey]}</button>`;
                 });
 
                 html += `</div> <div class="space-y-4">`;
@@ -462,38 +459,41 @@
                                 <span class="bg-white/50 dark:bg-white/[0.05] text-slate-800 dark:text-slate-300 px-2.5 py-1 rounded-lg border border-white/40 dark:border-white/[0.05]">Match #${m.id}</span>
                                 <span class="font-bold text-slate-600 dark:text-slate-400">${m.date}</span>
                                 
-                                <span id="pts-badge-${pIdx}-${m.id}" class="px-2.5 py-1 rounded-lg font-black ${m.realHome !== '' && m.realAway !== '' ? (pts === 5 ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30' : pts === 3 ? 'bg-blue-500/20 text-blue-500 border border-blue-500/30' : pts === 2 ? 'bg-yellow-500/20 text-yellow-600 dark:text-yellow-500 border border-yellow-500/30' : 'bg-rose-500/20 text-rose-500 border border-rose-500/30') : 'text-slate-500 dark:text-slate-500 italic font-semibold'}">
+                                <span id="pts-badge-${pIdx}-${m.id}" class="px-2.5 py-1 rounded-lg font-black ${m.realHome !== '' && m.realAway !== '' ? (pts === 5 ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30' : pts === 3 ? 'bg-blue-500/20 text-blue-500 border border-blue-500/30' : pts === 2 ? 'bg-yellow-500/20 text-yellow-600 dark:text-yellow-500 border border-yellow-500/20' : 'bg-rose-500/20 text-rose-500 border border-rose-500/30') : 'text-slate-500 dark:text-slate-500 italic font-semibold'}">
                                     ${m.realHome !== '' && m.realAway !== '' ? `+${pts} Pkt.` : 'Offen'}
                                 </span>
                             </div>
                             
-                            <div class="space-y-3.5 py-1">
-                                <div class="flex items-center gap-4">
-                                    <span class="text-3xl sm:text-4xl drop-shadow-md filter select-none">${teamFlags[m.t1] || "🏳️"}</span>
-                                    <span class="font-black text-base sm:text-lg tracking-tight text-slate-900 dark:text-white ${m.t1 ? '' : 'text-slate-500/60 dark:text-slate-500/80 italic font-medium'}">${t1Name}</span>
+                            <div class="space-y-3">
+                                <div class="grid grid-cols-12 gap-2 text-[9px] uppercase font-black tracking-wider text-slate-400 dark:text-slate-500 text-center">
+                                    <div class="col-span-6 text-left pl-2">Team</div>
+                                    <div class="col-span-3">Tipp</div>
+                                    <div class="col-span-3 text-emerald-600 dark:text-emerald-400">Real</div>
                                 </div>
-                                <div class="flex items-center gap-4">
-                                    <span class="text-3xl sm:text-4xl drop-shadow-md filter select-none">${teamFlags[m.t2] || "🏳️"}</span>
-                                    <span class="font-black text-base sm:text-lg tracking-tight text-slate-900 dark:text-white ${m.t2 ? '' : 'text-slate-500/60 dark:text-slate-500/80 italic font-medium'}">${t2Name}</span>
-                                </div>
-                            </div>
-                            
-                            <div class="grid grid-cols-2 gap-3 pt-2">
-                                <div class="bg-white/40 dark:bg-black/20 backdrop-blur-md p-3 rounded-2xl border border-white/40 dark:border-white/[0.05] text-center flex flex-col items-center justify-center shadow-inner">
-                                    <span class="block text-[9px] uppercase font-black tracking-wider text-slate-500 dark:text-slate-500 mb-2">Dein Tipp</span>
-                                    <div class="flex justify-center items-center gap-2 w-full">
-                                        <input type="number" id="input-${pIdx}-${m.id}-tipHome" pattern="[0-9]*" inputmode="numeric" min="0" max="99" placeholder="-" value="${m.tipHome !== undefined ? m.tipHome : ''}" oninput="handleLiveInput(this, ${pIdx}, ${m.id}, 'tipHome')" class="w-14 h-12 bg-white/70 dark:bg-slate-900/60 text-slate-900 dark:text-amber-400 text-center rounded-xl font-black text-xl focus:outline-none border border-white/50 dark:border-white/[0.1] focus:ring-2 focus:ring-amber-500/40 transition-all shadow-sm">
-                                        <span class="text-slate-400 dark:text-slate-600 font-black text-xl">:</span>
-                                        <input type="number" id="input-${pIdx}-${m.id}-tipAway" pattern="[0-9]*" inputmode="numeric" min="0" max="99" placeholder="-" value="${m.tipAway !== undefined ? m.tipAway : ''}" oninput="handleLiveInput(this, ${pIdx}, ${m.id}, 'tipAway')" class="w-14 h-12 bg-white/70 dark:bg-slate-900/60 text-slate-900 dark:text-amber-400 text-center rounded-xl font-black text-xl focus:outline-none border border-white/50 dark:border-white/[0.1] focus:ring-2 focus:ring-amber-500/40 transition-all shadow-sm">
+
+                                <div class="grid grid-cols-12 gap-2 items-center bg-white/30 dark:bg-black/20 p-2 rounded-2xl border border-white/40 dark:border-white/[0.03]">
+                                    <div class="col-span-6 flex items-center gap-2.5 min-w-0">
+                                        <span class="text-2xl filter drop-shadow-sm select-none shrink-0">${teamFlags[m.t1] || "🏳️"}</span>
+                                        <span class="font-black text-sm sm:text-base tracking-tight text-slate-900 dark:text-white truncate ${m.t1 ? '' : 'text-slate-500/60 dark:text-slate-500/80 italic font-medium'}">${t1Name}</span>
+                                    </div>
+                                    <div class="col-span-3 flex justify-center">
+                                        <input type="number" id="input-${pIdx}-${m.id}-tipHome" pattern="[0-9]*" inputmode="numeric" min="0" max="99" placeholder="-", value="${m.tipHome !== undefined ? m.tipHome : ''}" oninput="handleLiveInput(this, ${pIdx}, ${m.id}, 'tipHome')" class="w-13 h-11 bg-white/70 dark:bg-slate-900/60 text-slate-900 dark:text-amber-400 text-center rounded-xl font-black text-lg focus:outline-none border border-white/50 dark:border-white/[0.1] focus:ring-2 focus:ring-amber-500/40 transition-all shadow-sm">
+                                    </div>
+                                    <div class="col-span-3 flex justify-center">
+                                        <input type="number" id="input-${pIdx}-${m.id}-realHome" pattern="[0-9]*" inputmode="numeric" min="0" max="99" placeholder="-" value="${m.realHome !== undefined ? m.realHome : ''}" oninput="handleLiveInput(this, ${pIdx}, ${m.id}, 'realHome')" class="w-13 h-11 bg-white/70 dark:bg-slate-900/60 text-slate-900 dark:text-emerald-500 text-center rounded-xl font-black text-lg focus:outline-none border border-white/50 dark:border-white/[0.1] focus:ring-2 focus:ring-emerald-500/40 transition-all shadow-sm">
                                     </div>
                                 </div>
-                                
-                                <div class="bg-emerald-500/[0.02] dark:bg-emerald-950/[0.06] p-3 rounded-2xl border border-emerald-500/20 dark:border-emerald-500/10 text-center flex flex-col items-center justify-center">
-                                    <span class="block text-[9px] uppercase font-black tracking-wider text-emerald-600 dark:text-emerald-400 mb-2">Real</span>
-                                    <div class="flex justify-center items-center gap-2 w-full">
-                                        <input type="number" id="input-${pIdx}-${m.id}-realHome" pattern="[0-9]*" inputmode="numeric" min="0" max="99" placeholder="-" value="${m.realHome !== undefined ? m.realHome : ''}" oninput="handleLiveInput(this, ${pIdx}, ${m.id}, 'realHome')" class="w-14 h-12 bg-white/70 dark:bg-slate-900/60 text-slate-900 dark:text-emerald-500 text-center rounded-xl font-black text-xl focus:outline-none border border-white/50 dark:border-white/[0.1] focus:ring-2 focus:ring-emerald-500/40 transition-all shadow-sm">
-                                        <span class="text-emerald-300 dark:text-emerald-800 font-black text-xl">:</span>
-                                        <input type="number" id="input-${pIdx}-${m.id}-realAway" pattern="[0-9]*" inputmode="numeric" min="0" max="99" placeholder="-" value="${m.realAway !== undefined ? m.realAway : ''}" oninput="handleLiveInput(this, ${pIdx}, ${m.id}, 'realAway')" class="w-14 h-12 bg-white/70 dark:bg-slate-900/60 text-slate-900 dark:text-emerald-500 text-center rounded-xl font-black text-xl focus:outline-none border border-white/50 dark:border-white/[0.1] focus:ring-2 focus:ring-emerald-500/40 transition-all shadow-sm">
+
+                                <div class="grid grid-cols-12 gap-2 items-center bg-white/30 dark:bg-black/20 p-2 rounded-2xl border border-white/40 dark:border-white/[0.03]">
+                                    <div class="col-span-6 flex items-center gap-2.5 min-w-0">
+                                        <span class="text-2xl filter drop-shadow-sm select-none shrink-0">${teamFlags[m.t2] || "🏳️"}</span>
+                                        <span class="font-black text-sm sm:text-base tracking-tight text-slate-900 dark:text-white truncate ${m.t2 ? '' : 'text-slate-500/60 dark:text-slate-500/80 italic font-medium'}">${t2Name}</span>
+                                    </div>
+                                    <div class="col-span-3 flex justify-center">
+                                        <input type="number" id="input-${pIdx}-${m.id}-tipAway" pattern="[0-9]*" inputmode="numeric" min="0" max="99" placeholder="-", value="${m.tipAway !== undefined ? m.tipAway : ''}" oninput="handleLiveInput(this, ${pIdx}, ${m.id}, 'tipAway')" class="w-13 h-11 bg-white/70 dark:bg-slate-900/60 text-slate-900 dark:text-amber-400 text-center rounded-xl font-black text-lg focus:outline-none border border-white/50 dark:border-white/[0.1] focus:ring-2 focus:ring-amber-500/40 transition-all shadow-sm">
+                                    </div>
+                                    <div class="col-span-3 flex justify-center">
+                                        <input type="number" id="input-${pIdx}-${m.id}-realAway" pattern="[0-9]*" inputmode="numeric" min="0" max="99" placeholder="-" value="${m.realAway !== undefined ? m.realAway : ''}" oninput="handleLiveInput(this, ${pIdx}, ${m.id}, 'realAway')" class="w-13 h-11 bg-white/70 dark:bg-slate-900/60 text-slate-900 dark:text-emerald-500 text-center rounded-xl font-black text-lg focus:outline-none border border-white/50 dark:border-white/[0.1] focus:ring-2 focus:ring-emerald-500/40 transition-all shadow-sm">
                                     </div>
                                 </div>
                             </div>
