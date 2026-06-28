@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>WM 2026 Tippspiel Mobile Pro</title>
+    <title>WM 2026 Live-Tippspiel</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -11,7 +11,7 @@
         }
     </script>
     <style>
-        /* Unschöne native Browser-Pfeile bei Nummernfeldern komplett entfernen */
+        /* Verhindert native Browser-Pfeile bei Nummernfeldern */
         input::-webkit-outer-spin-button,
         input::-webkit-inner-spin-button {
             -webkit-appearance: none;
@@ -21,56 +21,51 @@
             -moz-appearance: textfield;
         }
         
-        ::-webkit-scrollbar { width: 4px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-        .dark ::-webkit-scrollbar-thumb { background: #475569; }
+        /* Scrollbar-Versteck für die Runden-Tabs */
+        .scrollbar-none::-webkit-scrollbar { display: none; }
+        .scrollbar-none { -ms-overflow-style: none; scrollbar-width: none; }
         
-        /* Input-Optimierung für iOS & Android (verhindert automatisches Zoomen) */
+        /* Mobile Input-Optimierung gegen automatischen iOS-Zoom */
         input[type="number"], input[type="text"], select {
             font-size: 16px !important;
         }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-100 font-sans min-h-screen transition-colors duration-200 pb-12">
+<body class="bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100 font-sans min-h-screen transition-colors duration-300 pb-16">
 
-    <header class="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 py-4 px-4 sticky top-0 z-50 shadow-md transition-colors duration-200">
-        <div class="max-w-2xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-3">
-            <div class="text-center sm:text-left">
-                <h1 class="text-2xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-yellow-500 to-amber-600 dark:from-yellow-400 dark:to-amber-500">
-                    🏆 WM 2026 Tippspiel
+    <header class="bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800/80 py-4 px-4 sticky top-0 z-50 shadow-sm transition-colors duration-200">
+        <div class="max-w-2xl mx-auto flex justify-between items-center gap-4">
+            <div>
+                <span class="text-[10px] tracking-widest font-black uppercase text-amber-500">World Cup 2026</span>
+                <h1 class="text-xl font-black tracking-tight bg-gradient-to-r from-slate-900 via-slate-700 to-slate-900 dark:from-white dark:via-slate-200 dark:to-white text-transparent bg-clip-text">
+                    Knockout-Planer
                 </h1>
             </div>
             
-            <div class="flex items-center gap-2 w-full sm:w-auto justify-center sm:justify-end">
-                <button onclick="toggleTheme()" class="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 hover:bg-slate-200 dark:hover:bg-slate-800 transition-all text-lg cursor-pointer">
+            <div class="flex items-center gap-2">
+                <button onclick="toggleTheme()" class="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/50 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all text-sm cursor-pointer shadow-inner">
                     <span class="dark:hidden">🌙</span>
                     <span class="hidden dark:inline">☀️</span>
                 </button>
-                <button onclick="shareState()" class="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-amber-500 text-slate-950 font-bold hover:bg-amber-400 transition-all shadow-sm text-sm cursor-pointer">
+                <button onclick="shareState()" class="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 font-black shadow-lg shadow-orange-500/10 hover:brightness-110 transition-all text-xs uppercase tracking-wider cursor-pointer">
                     <span>🔗</span> Link teilen
                 </button>
             </div>
         </div>
     </header>
 
-    <div class="sticky top-[69px] z-40 bg-slate-50/90 dark:bg-slate-900/90 backdrop-blur-md py-3 px-4 border-b border-slate-200 dark:border-slate-800/60">
-        <div id="player-view-toggle" class="max-w-md mx-auto flex bg-slate-200 dark:bg-slate-950 p-1 rounded-xl border border-slate-300 dark:border-slate-800">
+    <div class="sticky top-[69px] z-40 bg-slate-50/80 dark:bg-slate-950/80 backdrop-blur-md py-3 px-4 border-b border-slate-200/40 dark:border-slate-900/40">
+        <div id="player-view-toggle" class="max-w-md mx-auto flex bg-slate-200/60 dark:bg-slate-900 p-1 rounded-2xl border border-slate-300/40 dark:border-slate-800/60 shadow-inner">
             </div>
     </div>
 
-    <div class="hidden">
-        <span id="lead-name-0"></span><span id="lead-score-0"></span>
-        <span id="lead-name-1"></span><span id="lead-score-1"></span>
+    <div id="toast" class="fixed bottom-6 left-1/2 transform -translate-x-1/2 translate-y-20 opacity-0 bg-slate-900 text-white dark:bg-white dark:text-slate-900 px-6 py-3.5 rounded-2xl shadow-2xl transition-all duration-300 z-50 font-bold text-xs uppercase tracking-widest flex items-center gap-2.5 border border-white/10">
+        <span class="text-emerald-500">✓</span> <span id="toast-text">Kopiert!</span>
     </div>
 
-    <div id="toast" class="fixed bottom-5 left-1/2 transform -translate-x-1/2 translate-y-20 opacity-0 bg-emerald-600 text-white px-6 py-3 rounded-xl shadow-2xl transition-all duration-300 z-50 font-semibold flex items-center gap-2 whitespace-nowrap">
-        <span>✓</span> <span id="toast-text">Link kopiert!</span>
-    </div>
-
-    <main class="max-w-2xl mx-auto p-4">
-        <div id="player-container-0" class="bg-white dark:bg-slate-800/40 rounded-2xl p-4 border border-slate-200 dark:border-slate-800 shadow-lg transition-colors duration-200"></div>
-        <div id="player-container-1" class="bg-white dark:bg-slate-800/40 rounded-2xl p-4 border border-slate-200 dark:border-slate-800 shadow-lg transition-colors duration-200 hidden"></div>
+    <main class="max-w-2xl mx-auto p-4 space-y-4">
+        <div id="player-container-0" class="transition-all duration-300"></div>
+        <div id="player-container-1" class="transition-all duration-300 hidden"></div>
     </main>
 
     <script>
@@ -86,7 +81,7 @@
         };
 
         const roundNames = {
-            'R32': 'R32', 'R16': 'AF', 'QF': 'VF', 'SF': 'HF', '3RD': 'Pl. 3', 'FINAL': 'Finale'
+            'R32': 'Runde der 32', 'R16': 'Achtelfinale', 'QF': 'Viertelfinale', 'SF': 'Halbfinale', '3RD': 'Platz 3', 'FINAL': 'Finale'
         };
 
         const initialMatchesData = [
@@ -138,7 +133,7 @@
         }
 
         function saveToLocalStorage() {
-            localStorage.setItem('wm2026_tipp_state_v3', JSON.stringify(state));
+            localStorage.setItem('wm2026_tipp_state_v4', JSON.stringify(state));
         }
 
         function loadInitialState() {
@@ -162,13 +157,13 @@
                         });
                     });
                     saveToLocalStorage();
-                    showToast("Tipps importiert!");
+                    showToast("Ergebnisse importiert!");
                     window.history.replaceState({}, document.title, window.location.pathname);
                     return;
                 } catch(e) { console.error(e); }
             }
 
-            const local = localStorage.getItem('wm2026_tipp_state_v3');
+            const local = localStorage.getItem('wm2026_tipp_state_v4');
             if (local) { try { state = JSON.parse(local); } catch(e) { console.error(e); } }
         }
 
@@ -184,7 +179,7 @@
             const shareUrl = window.location.origin + window.location.pathname + '?share=' + base64;
             
             navigator.clipboard.writeText(shareUrl).then(() => {
-                showToast("Link in Zwischenablage!");
+                showToast("WhatsApp-Link kopiert!");
             }).catch(() => { alert("URL:\n" + shareUrl); });
         }
 
@@ -229,8 +224,8 @@
             for (let i = 1; i <= 32; i++) {
                 const m = matches.find(x => x.id === i);
                 let winner = "", loser = "";
-                const fallbackT1 = "Sp. " + getMatchOriginId(i, 't1');
-                const fallbackT2 = "Sp. " + getMatchOriginId(i, 't2');
+                const fallbackT1 = "Sieger Sp. " + getMatchOriginId(i, 't1');
+                const fallbackT2 = "Sieger Sp. " + getMatchOriginId(i, 't2');
 
                 if (m.mode === 'manual') {
                     if (m.manualWinner === 't1' && m.t1) winner = m.t1;
@@ -268,11 +263,11 @@
             state[1].matches.forEach(m => totalPointsP2 += calculateMatchPoints(m));
 
             toggleContainer.innerHTML = `
-                <button onclick="setActivePlayerView(0)" class="flex-1 py-2.5 text-center font-bold rounded-lg transition-all text-xs sm:text-sm cursor-pointer truncate px-2 ${activePlayerView === 0 ? 'bg-amber-500 text-slate-950 shadow-md' : 'text-slate-600 dark:text-slate-400'}">
-                    🏆 ${state[0].name || 'Tipper 1'} (${totalPointsP1} P.)
+                <button onclick="setActivePlayerView(0)" id="toggle-btn-0" class="flex-1 py-3 text-center font-black rounded-xl transition-all text-xs uppercase tracking-wider cursor-pointer truncate px-2 ${activePlayerView === 0 ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 shadow-md scale-[1.02]' : 'text-slate-500 dark:text-slate-400'}">
+                    👤 ${state[0].name || 'Tipper 1'} (${totalPointsP1} P.)
                 </button>
-                <button onclick="setActivePlayerView(1)" class="flex-1 py-2.5 text-center font-bold rounded-lg transition-all text-xs sm:text-sm cursor-pointer truncate px-2 ${activePlayerView === 1 ? 'bg-amber-500 text-slate-950 shadow-md' : 'text-slate-600 dark:text-slate-400'}">
-                    🏆 ${state[1].name || 'Tipper 2'} (${totalPointsP2} P.)
+                <button onclick="setActivePlayerView(1)" id="toggle-btn-1" class="flex-1 py-3 text-center font-black rounded-xl transition-all text-xs uppercase tracking-wider cursor-pointer truncate px-2 ${activePlayerView === 1 ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 shadow-md scale-[1.02]' : 'text-slate-500 dark:text-slate-400'}">
+                    👤 ${state[1].name || 'Tipper 2'} (${totalPointsP2} P.)
                 </button>
             `;
         }
@@ -289,24 +284,24 @@
 
                 const container = document.getElementById("player-container-" + pIdx);
                 let html = `
-                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 dark:border-slate-800 pb-4 mb-4">
-                        <div class="w-full sm:w-auto">
-                            <label class="block text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">Name des Tippers</label>
+                    <div class="bg-slate-100/70 dark:bg-slate-900/60 p-4 rounded-3xl border border-slate-200/60 dark:border-slate-800/60 flex items-center justify-between gap-4 shadow-inner mb-2">
+                        <div class="flex-1">
+                            <span class="block text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1">Dein Profilname</span>
                             <input type="text" value="${player.name}" oninput="updatePlayerName(${pIdx}, this.value)" 
-                                class="bg-slate-100 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3 py-2 text-lg font-bold text-slate-900 dark:text-white focus:outline-none focus:border-amber-500 w-full">
+                                class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl px-4 py-2.5 text-base font-bold text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500/50 w-full transition-all shadow-sm">
                         </div>
-                        <div class="bg-emerald-500 dark:bg-emerald-600 px-4 py-2 rounded-xl shadow-sm flex sm:flex-col justify-between items-center sm:justify-center min-w-[100px]">
-                            <span class="text-[10px] font-medium text-emerald-100 uppercase">Punkte</span>
-                            <span class="text-xl font-black text-white">${totalPoints}</span>
+                        <div class="bg-gradient-to-br from-emerald-500 to-teal-600 dark:from-emerald-600 dark:to-teal-700 h-[68px] px-5 rounded-2xl shadow-md flex flex-col justify-center items-center min-w-[90px] border border-emerald-400/20">
+                            <span class="text-[9px] font-black text-emerald-100 uppercase tracking-wider">Score</span>
+                            <span class="text-2xl font-black text-white leading-none mt-1">${totalPoints}</span>
                         </div>
                     </div>
                     
-                    <div class="flex gap-1 overflow-x-auto pb-2 mb-4 scrollbar-none snap-x">
+                    <div class="flex gap-2 overflow-x-auto pb-3 pt-1 scrollbar-none snap-x">
                 `;
 
                 Object.keys(roundNames).forEach(rKey => {
                     const isActive = player.activeFilter === rKey;
-                    html += `<button onclick="setFilter(${pIdx}, '${rKey}')" class="px-3 py-2 rounded-lg text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${isActive ? 'bg-amber-500 text-slate-950 shadow-md' : 'bg-slate-100 dark:bg-slate-950 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-800'}">${roundNames[rKey]}</button>`;
+                    html += `<button onclick="setFilter(${pIdx}, '${rKey}')" class="snap-center px-4 py-2.5 rounded-2xl text-xs font-black transition-all whitespace-nowrap cursor-pointer uppercase tracking-wider ${isActive ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-950 shadow-md scale-105' : 'bg-white dark:bg-slate-900/40 text-slate-500 dark:text-slate-400 border border-slate-200/80 dark:border-slate-800/80'}" style="box-shadow: ${isActive ? '0 4px 12px rgba(0,0,0,0.1)' : 'none'}">${roundNames[rKey]}</button>`;
                 });
 
                 html += `</div> <div class="space-y-4">`;
@@ -318,58 +313,64 @@
                     const isDraw = m.realHome !== '' && m.realAway !== '' && parseInt(m.realHome) === parseInt(m.realAway);
 
                     html += `
-                        <div class="bg-slate-50 dark:bg-slate-950 rounded-2xl p-4 border border-slate-200 dark:border-slate-800/80 shadow-sm space-y-4">
-                            <div class="flex justify-between items-center text-xs text-slate-400 border-b border-slate-200 dark:border-slate-900 pb-2">
-                                <span class="font-bold bg-slate-200 dark:bg-slate-800 px-2 py-0.5 rounded-md text-slate-700 dark:text-slate-300">Match #${m.id}</span>
-                                <span class="font-medium">${m.date}</span>
-                                ${m.realHome !== '' && m.realAway !== '' ? `<span class="px-2 py-0.5 rounded-md font-bold ${pts === 5 ? 'bg-emerald-500/20 text-emerald-600' : pts === 3 ? 'bg-blue-500/20 text-blue-500' : pts === 2 ? 'bg-yellow-500/20 text-yellow-600' : 'bg-rose-500/20 text-rose-500'}">+${pts} Pkt.</span>` : '<span class="text-slate-400 dark:text-slate-600 italic">Offen</span>'}
+                        <div class="bg-white dark:bg-slate-900 rounded-3xl p-4 border border-slate-200/80 dark:border-slate-800/80 shadow-sm hover:shadow-md transition-all duration-200 space-y-4">
+                            
+                            <div class="flex justify-between items-center text-[10px] uppercase font-bold tracking-widest text-slate-400 dark:text-slate-500 border-b border-slate-100 dark:border-slate-950 pb-2.5">
+                                <span class="bg-slate-100 dark:bg-slate-800/70 text-slate-700 dark:text-slate-400 px-2.5 py-1 rounded-lg border border-slate-200/40 dark:border-slate-700/30">Match #${m.id}</span>
+                                <span class="font-semibold text-slate-500 dark:text-slate-400">${m.date}</span>
+                                ${m.realHome !== '' && m.realAway !== '' ? `
+                                    <span class="px-2.5 py-1 rounded-lg font-black ${pts === 5 ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20' : pts === 3 ? 'bg-blue-500/10 text-blue-500 border border-blue-500/20' : pts === 2 ? 'bg-yellow-500/10 text-yellow-600 dark:text-yellow-500 border border-yellow-500/20' : 'bg-rose-500/10 text-rose-500 border border-rose-500/20'}">
+                                        +${pts} Pkt.
+                                    </span>
+                                ` : '<span class="text-slate-400 dark:text-slate-600 italic font-medium">Offen</span>'}
                             </div>
                             
-                            <div class="space-y-3">
-                                <div class="flex items-center gap-3">
-                                    <span class="text-2xl">${teamFlags[m.t1] || "🏳️"}</span>
-                                    <span class="font-bold text-sm sm:text-base truncate ${m.t1 ? 'text-slate-900 dark:text-slate-200' : 'text-slate-400 italic font-normal'}">${t1Name}</span>
-                                </div>
-                                <div class="flex items-center gap-3">
-                                    <span class="text-2xl">${teamFlags[m.t2] || "🏳️"}</span>
-                                    <span class="font-bold text-sm sm:text-base truncate ${m.t2 ? 'text-slate-900 dark:text-slate-200' : 'text-slate-400 italic font-normal'}">${t2Name}</span>
-                                </div>
-                            </div>
-                            
-                            <div class="grid grid-cols-2 gap-3 pt-1">
-                                <div class="bg-slate-200/40 dark:bg-slate-900/60 p-3 rounded-xl border border-slate-300 dark:border-slate-800 text-center flex flex-col items-center justify-center">
-                                    <span class="block text-[9px] uppercase font-black tracking-wider text-slate-400 mb-2">Dein Tipp</span>
-                                    <div class="flex justify-center items-center gap-2 w-full">
-                                        <input type="number" pattern="[0-9]*" inputmode="numeric" min="0" placeholder="-" value="${m.tipHome !== undefined ? m.tipHome : ''}" oninput="updateMatchValue(${pIdx}, ${m.id}, 'tipHome', this.value)" class="w-14 h-12 bg-white dark:bg-slate-950 text-slate-900 dark:text-amber-400 text-center rounded-xl font-black text-xl focus:outline-none border border-slate-300 dark:border-slate-800 focus:border-amber-500 dark:focus:border-amber-500 transition-all">
-                                        <span class="text-slate-400 font-bold text-lg">:</span>
-                                        <input type="number" pattern="[0-9]*" inputmode="numeric" min="0" placeholder="-" value="${m.tipAway !== undefined ? m.tipAway : ''}" oninput="updateMatchValue(${pIdx}, ${m.id}, 'tipAway', this.value)" class="w-14 h-12 bg-white dark:bg-slate-950 text-slate-900 dark:text-amber-400 text-center rounded-xl font-black text-xl focus:outline-none border border-slate-300 dark:border-slate-800 focus:border-amber-500 dark:focus:border-amber-500 transition-all">
+                            <div class="grid grid-cols-12 gap-2 items-center">
+                                
+                                <div class="col-span-6 space-y-4 py-1">
+                                    <div class="flex items-center gap-3">
+                                        <span class="text-2xl drop-shadow-sm filter">${teamFlags[m.t1] || "🏳️"}</span>
+                                        <span class="font-bold text-xs sm:text-sm truncate tracking-tight ${m.t1 ? 'text-slate-900 dark:text-slate-100' : 'text-slate-400/80 dark:text-slate-500/80 italic font-medium'}">${t1Name}</span>
+                                    </div>
+                                    <div class="flex items-center gap-3">
+                                        <span class="text-2xl drop-shadow-sm filter">${teamFlags[m.t2] || "🏳️"}</span>
+                                        <span class="font-bold text-xs sm:text-sm truncate tracking-tight ${m.t2 ? 'text-slate-900 dark:text-slate-100' : 'text-slate-400/80 dark:text-slate-500/80 italic font-medium'}">${t2Name}</span>
                                     </div>
                                 </div>
                                 
-                                <div class="bg-emerald-500/5 dark:bg-emerald-950/20 p-3 rounded-xl border border-emerald-200 dark:border-emerald-900/30 text-center flex flex-col items-center justify-center">
-                                    <span class="block text-[9px] uppercase font-black tracking-wider text-emerald-600 dark:text-emerald-400 mb-2">Real</span>
-                                    <div class="flex justify-center items-center gap-2 w-full">
-                                        <input type="number" pattern="[0-9]*" inputmode="numeric" min="0" placeholder="-" value="${m.realHome !== undefined ? m.realHome : ''}" oninput="updateMatchValue(${pIdx}, ${m.id}, 'realHome', this.value)" class="w-14 h-12 bg-white dark:bg-slate-950 text-slate-900 dark:text-emerald-400 text-center rounded-xl font-black text-xl focus:outline-none border border-slate-300 dark:border-slate-800 focus:border-emerald-500 dark:focus:border-emerald-500 transition-all">
-                                        <span class="text-emerald-500 font-bold text-lg">:</span>
-                                        <input type="number" pattern="[0-9]*" inputmode="numeric" min="0" placeholder="-" value="${m.realAway !== undefined ? m.realAway : ''}" oninput="updateMatchValue(${pIdx}, ${m.id}, 'realAway', this.value)" class="w-14 h-12 bg-white dark:bg-slate-950 text-slate-900 dark:text-emerald-400 text-center rounded-xl font-black text-xl focus:outline-none border border-slate-300 dark:border-slate-800 focus:border-emerald-500 dark:focus:border-emerald-500 transition-all">
+                                <div class="col-span-3 bg-slate-50 dark:bg-slate-950 p-2 rounded-2xl border border-slate-200/60 dark:border-slate-800/60 text-center shadow-inner">
+                                    <span class="block text-[8px] uppercase font-black tracking-widest text-slate-400 dark:text-slate-500 mb-1.5">Tipp</span>
+                                    <div class="flex justify-center items-center gap-1">
+                                        <input type="number" pattern="[0-9]*" inputmode="numeric" min="0" placeholder="-" value="${m.tipHome !== undefined ? m.tipHome : ''}" oninput="updateMatchValue(${pIdx}, ${m.id}, 'tipHome', this.value)" class="w-9 h-11 bg-white dark:bg-slate-900 text-slate-900 dark:text-amber-400 text-center rounded-xl font-black text-base focus:outline-none border border-slate-200 dark:border-slate-800/80 focus:ring-2 focus:ring-amber-500/40 transition-all">
+                                        <span class="text-slate-300 dark:text-slate-700 font-bold text-sm">:</span>
+                                        <input type="number" pattern="[0-9]*" inputmode="numeric" min="0" placeholder="-" value="${m.tipAway !== undefined ? m.tipAway : ''}" oninput="updateMatchValue(${pIdx}, ${m.id}, 'tipAway', this.value)" class="w-9 h-11 bg-white dark:bg-slate-900 text-slate-900 dark:text-amber-400 text-center rounded-xl font-black text-base focus:outline-none border border-slate-200 dark:border-slate-800/80 focus:ring-2 focus:ring-amber-500/40 transition-all">
+                                    </div>
+                                </div>
+                                
+                                <div class="col-span-3 bg-emerald-500/5 dark:bg-emerald-950/15 p-2 rounded-2xl border border-emerald-100 dark:border-emerald-900/40 text-center">
+                                    <span class="block text-[8px] uppercase font-black tracking-widest text-emerald-600 dark:text-emerald-400 mb-1.5">Real</span>
+                                    <div class="flex justify-center items-center gap-1">
+                                        <input type="number" pattern="[0-9]*" inputmode="numeric" min="0" placeholder="-" value="${m.realHome !== undefined ? m.realHome : ''}" oninput="updateMatchValue(${pIdx}, ${m.id}, 'realHome', this.value)" class="w-9 h-11 bg-white dark:bg-slate-900 text-slate-900 dark:text-emerald-500 text-center rounded-xl font-black text-base focus:outline-none border border-slate-200 dark:border-slate-800/80 focus:ring-2 focus:ring-emerald-500/40 transition-all">
+                                        <span class="text-emerald-200 dark:text-emerald-900/60 font-bold text-sm">:</span>
+                                        <input type="number" pattern="[0-9]*" inputmode="numeric" min="0" placeholder="-" value="${m.realAway !== undefined ? m.realAway : ''}" oninput="updateMatchValue(${pIdx}, ${m.id}, 'realAway', this.value)" class="w-9 h-11 bg-white dark:bg-slate-900 text-slate-900 dark:text-emerald-500 text-center rounded-xl font-black text-base focus:outline-none border border-slate-200 dark:border-slate-800/80 focus:ring-2 focus:ring-emerald-500/40 transition-all">
                                     </div>
                                 </div>
                             </div>
                             
-                            <div class="pt-2 border-t border-slate-200 dark:border-slate-900 flex items-center justify-between gap-1.5 text-xs">
-                                <div class="flex items-center gap-1.5">
-                                    <span class="text-[10px] text-slate-400">Modus:</span>
-                                    <div class="inline-flex rounded-lg p-0.5 bg-slate-200 dark:bg-slate-950 border border-slate-300 dark:border-slate-800">
-                                        <button onclick="updateMatchValue(${pIdx}, ${m.id}, 'mode', 'auto')" class="px-2 py-1 text-[10px] font-bold rounded-md cursor-pointer ${m.mode !== 'manual' ? 'bg-amber-500 text-slate-950 shadow-sm' : 'text-slate-500'}">Auto</button>
-                                        <button onclick="updateMatchValue(${pIdx}, ${m.id}, 'mode', 'manual')" class="px-2 py-1 text-[10px] font-bold rounded-md cursor-pointer ${m.mode === 'manual' ? 'bg-amber-500 text-slate-950 shadow-sm' : 'text-slate-500'}">Man.</button>
+                            <div class="pt-3 border-t border-slate-100 dark:border-slate-950 flex items-center justify-between gap-2 text-xs">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-[9px] uppercase font-black tracking-widest text-slate-400">Progression:</span>
+                                    <div class="inline-flex rounded-xl p-0.5 bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800">
+                                        <button onclick="updateMatchValue(${pIdx}, ${m.id}, 'mode', 'auto')" class="px-2.5 py-1 text-[9px] uppercase font-black rounded-lg cursor-pointer transition-all ${m.mode !== 'manual' ? 'bg-white dark:bg-slate-800 text-slate-950 dark:text-white shadow-sm' : 'text-slate-400 dark:text-slate-500'}">Auto</button>
+                                        <button onclick="updateMatchValue(${pIdx}, ${m.id}, 'mode', 'manual')" class="px-2.5 py-1 text-[9px] uppercase font-black rounded-lg cursor-pointer transition-all ${m.mode === 'manual' ? 'bg-white dark:bg-slate-800 text-slate-950 dark:text-white shadow-sm' : 'text-slate-400 dark:text-slate-500'}">Man.</button>
                                     </div>
                                 </div>
-                                <div class="text-[11px] max-w-[60%]">
+                                <div class="text-[11px] max-w-[55%] truncate">
                                     ${m.mode === 'manual' ? `
-                                        <div class="flex items-center gap-1"><span class="text-slate-400">Weiter:</span><select onchange="updateMatchValue(${pIdx}, ${m.id}, 'manualWinner', this.value)" class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-lg px-2 py-1 text-[11px] text-slate-900 dark:text-amber-400 font-bold max-w-[110px] truncate focus:outline-none"><option value="">--</option><option value="t1" ${m.manualWinner==='t1'?'selected':''}>${t1Name}</option><option value="t2" ${m.manualWinner==='t2'?'selected':''}>${t2Name}</option></select></div>
+                                        <div class="flex items-center gap-1.5 bg-amber-500/5 px-2 py-1 rounded-xl border border-amber-500/10"><span class="text-amber-600 dark:text-amber-400 font-bold text-[10px]">Gewinner:</span><select onchange="updateMatchValue(${pIdx}, ${m.id}, 'manualWinner', this.value)" class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg px-2 py-0.5 text-[11px] text-slate-900 dark:text-amber-400 font-black max-w-[100px] truncate focus:outline-none"><option value="">--</option><option value="t1" ${m.manualWinner==='t1'?'selected':''}>${t1Name}</option><option value="t2" ${m.manualWinner==='t2'?'selected':''}>${t2Name}</option></select></div>
                                     ` : `
                                         ${isDraw ? `
-                                            <div class="flex items-center gap-1 bg-amber-500/10 border border-amber-500/20 px-2 py-1 rounded-lg"><span class="text-amber-600 dark:text-amber-400 font-black text-[10px]">⚡ i.E.:</span><select onchange="updateMatchValue(${pIdx}, ${m.id}, 'penaltyWinner', this.value)" class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-lg px-1.5 py-0.5 text-[11px] text-slate-900 dark:text-amber-400 font-bold max-w-[90px] truncate focus:outline-none"><option value="">--</option><option value="t1" ${m.penaltyWinner==='t1'?'selected':''}>${t1Name}</option><option value="t2" ${m.penaltyWinner==='t2'?'selected':''}>${t2Name}</option></select></div>
+                                            <div class="flex items-center gap-1.5 bg-amber-500/10 border border-amber-500/20 px-2 py-1 rounded-xl"><span class="text-amber-500 font-black text-[10px]">⚡ i.E.:</span><select onchange="updateMatchValue(${pIdx}, ${m.id}, 'penaltyWinner', this.value)" class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg px-2 py-0.5 text-[11px] text-slate-900 dark:text-amber-400 font-black max-w-[90px] truncate focus:outline-none"><option value="">--</option><option value="t1" ${m.penaltyWinner==='t1'?'selected':''}>${t1Name}</option><option value="t2" ${m.penaltyWinner==='t2'?'selected':''}>${t2Name}</option></select></div>
                                         ` : ''}
                                     `}
                                 </div>
@@ -392,8 +393,12 @@
         window.updatePlayerName = function(pIdx, val) {
             state[pIdx].name = val;
             saveToLocalStorage();
-            // Updatet gezielt nur die Knöpfe und Dashboard-Labels, um den Fokus im Input-Feld nicht zu killen
-            updateToggleButtonsOnly();
+            
+            // Verhindert das Re-Rendern der Input-Felder um den Schreibfluss nicht zu unterbrechen
+            let totalPoints = 0;
+            state[pIdx].matches.forEach(m => totalPoints += calculateMatchPoints(m));
+            const btn = document.getElementById("toggle-btn-" + pIdx);
+            if (btn) btn.innerHTML = `👤 ${val || 'Tipper ' + (pIdx + 1)} (${totalPoints} P.)`;
         };
 
         window.setFilter = function(pIdx, filterKey) { state[pIdx].activeFilter = filterKey; renderApp(); };
