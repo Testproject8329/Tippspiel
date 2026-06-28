@@ -36,9 +36,12 @@
         }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100 font-sans min-h-screen transition-colors duration-300 pb-16">
+<body class="bg-slate-100/60 text-slate-900 dark:bg-slate-950 dark:text-slate-100 font-sans min-h-screen transition-colors duration-300 pb-16 relative overflow-x-hidden">
 
-    <header class="bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800/80 py-4 px-4 sticky top-0 z-50 shadow-sm transition-colors duration-200">
+    <div class="fixed top-[-10%] left-[-20%] w-[80vw] h-[80vw] sm:w-[50vw] sm:h-[50vw] bg-gradient-to-br from-amber-500/20 to-orange-500/0 rounded-full blur-[120px] pointer-events-none -z-10 animate-pulse duration-[6000ms]"></div>
+    <div class="fixed bottom-[-10%] right-[-20%] w-[90vw] h-[90vw] sm:w-[60vw] sm:h-[60vw] bg-gradient-to-tr from-emerald-500/15 to-teal-500/0 rounded-full blur-[140px] pointer-events-none -z-10 animate-pulse duration-[8000ms]"></div>
+
+    <header class="bg-white/70 dark:bg-slate-900/60 backdrop-blur-xl border-b border-white/40 dark:border-slate-800/50 py-4 px-4 sticky top-0 z-50 shadow-sm transition-colors duration-200">
         <div class="max-w-2xl mx-auto flex justify-between items-center gap-4">
             <div>
                 <span class="text-[10px] tracking-widest font-black uppercase text-amber-500">World Cup 2026</span>
@@ -48,23 +51,23 @@
             </div>
             
             <div class="flex items-center gap-2">
-                <button onclick="toggleTheme()" class="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/50 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all text-sm cursor-pointer shadow-inner">
+                <button onclick="toggleTheme()" class="p-2.5 rounded-xl bg-white/60 dark:bg-slate-800/40 border border-white/60 dark:border-slate-700/40 hover:bg-white dark:hover:bg-slate-800 transition-all text-sm cursor-pointer shadow-sm">
                     <span class="dark:hidden">🌙</span>
                     <span class="hidden dark:inline">☀️</span>
                 </button>
-                <button onclick="shareState()" class="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 font-black shadow-lg shadow-orange-500/10 hover:brightness-110 transition-all text-xs uppercase tracking-wider cursor-pointer">
+                <button onclick="shareState()" class="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 font-black shadow-lg shadow-orange-500/20 hover:brightness-110 transition-all text-xs uppercase tracking-wider cursor-pointer">
                     <span>🔗</span> Link teilen
                 </button>
             </div>
         </div>
     </header>
 
-    <div class="sticky top-[69px] z-40 bg-slate-50/80 dark:bg-slate-950/80 backdrop-blur-md py-3 px-4 border-b border-slate-200/40 dark:border-slate-900/40">
-        <div id="player-view-toggle" class="max-w-md mx-auto flex bg-slate-200/60 dark:bg-slate-900 p-1 rounded-2xl border border-slate-300/40 dark:border-slate-800/60 shadow-inner">
+    <div class="sticky top-[69px] z-40 bg-slate-100/40 dark:bg-slate-950/40 backdrop-blur-md py-3 px-4 border-b border-white/20 dark:border-slate-900/30">
+        <div id="player-view-toggle" class="max-w-md mx-auto flex bg-slate-300/40 dark:bg-slate-900/60 p-1 rounded-2xl border border-white/40 dark:border-slate-800/60 shadow-inner">
             </div>
     </div>
 
-    <div id="toast" class="fixed bottom-6 left-1/2 transform -translate-x-1/2 translate-y-20 opacity-0 bg-slate-900 text-white dark:bg-white dark:text-slate-900 px-6 py-3.5 rounded-2xl shadow-2xl transition-all duration-300 z-50 font-bold text-xs uppercase tracking-widest flex items-center gap-2.5 border border-white/10">
+    <div id="toast" class="fixed bottom-6 left-1/2 transform -translate-x-1/2 translate-y-20 opacity-0 bg-slate-900/90 text-white dark:bg-white/90 dark:text-slate-900 backdrop-blur-md px-6 py-3.5 rounded-2xl shadow-2xl transition-all duration-300 z-50 font-bold text-xs uppercase tracking-widest flex items-center gap-2.5 border border-white/20 dark:border-slate-800/40">
         <span class="text-emerald-500">✓</span> <span id="toast-text">Kopiert!</span>
     </div>
 
@@ -126,13 +129,11 @@
 
         let activePlayerView = 0;
 
-        // AUTOMATISCHE THEME ENGINE (Erkennt Smartphone-Modus)
         function initTheme() {
             const savedTheme = localStorage.getItem('theme');
             if (savedTheme) {
                 document.documentElement.classList.toggle('dark', savedTheme === 'dark');
             } else {
-                // Falls kein Wert im Speicher liegt -> Passe dich vollautomatisch dem Handy an
                 const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
                 document.documentElement.classList.toggle('dark', systemPrefersDark);
             }
@@ -284,9 +285,7 @@
             `;
         }
 
-        // SURGICAL INPUT ENGINE: Verhindert das Schließen der Handy-Tastatur komplett!
         window.handleLiveInput = function(input, pIdx, matchId, key) {
-            // Schutzschranke: Maximal 2 Stellen (Verhindert 3-stellige Falscheingaben)
             if (input.value.length > 2) {
                 input.value = input.value.slice(0, 2);
             }
@@ -296,21 +295,18 @@
             
             match[key] = input.value;
             saveToLocalStorage();
-            
-            // Berechnet die Folgerunden geräuschlos im Hintergrund
             propagateBracket(pIdx);
             
-            // Injiziert chirurgisch nur die Punkteänderung auf der Karte, ohne das Input-Feld neu zu zeichnen
             const ptsBadge = document.getElementById(`pts-badge-${pIdx}-${matchId}`);
             const pts = calculateMatchPoints(match);
             if (ptsBadge) {
                 if (match.realHome !== '' && match.realAway !== '' && match.realHome !== undefined && match.realAway !== undefined) {
                     ptsBadge.innerText = `+${pts} Pkt.`;
                     ptsBadge.className = `px-2.5 py-1 rounded-lg font-black ${
-                        pts === 5 ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' : 
-                        pts === 3 ? 'bg-blue-500/10 text-blue-500' : 
-                        pts === 2 ? 'bg-yellow-500/10 text-yellow-600 dark:text-yellow-500' : 
-                        'bg-rose-500/10 text-rose-500'
+                        pts === 5 ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20' : 
+                        pts === 3 ? 'bg-blue-500/10 text-blue-500 border border-blue-500/20' : 
+                        pts === 2 ? 'bg-yellow-500/10 text-yellow-600 dark:text-yellow-500 border border-yellow-500/20' : 
+                        'bg-rose-500/10 text-rose-500 border border-rose-500/20'
                     }`;
                 } else {
                     ptsBadge.innerText = 'Offen';
@@ -318,7 +314,6 @@
                 }
             }
             
-            // Aktualisiert die Live-Punkte im globalen Header
             let totalPoints = 0;
             state[pIdx].matches.forEach(m => totalPoints += calculateMatchPoints(m));
             
@@ -328,7 +323,6 @@
             const toggleBtn = document.getElementById(`toggle-btn-${pIdx}`);
             if (toggleBtn) toggleBtn.innerHTML = `👤 ${state[pIdx].name || 'Tipper ' + (pIdx + 1)} (${totalPoints} P.)`;
             
-            // Blendet das Elfmeter-Menü live ein/aus, falls ein Unentschieden im realen Ergebnis entsteht
             const extraCtrl = document.getElementById(`extra-ctrl-${pIdx}-${matchId}`);
             if (extraCtrl && match.mode !== 'manual') {
                 const isDraw = match.realHome !== '' && match.realAway !== '' && parseInt(match.realHome) === parseInt(match.realAway);
@@ -338,7 +332,7 @@
                     extraCtrl.innerHTML = `
                         <div class="flex items-center gap-1.5 bg-amber-500/10 border border-amber-500/20 px-2 py-1 rounded-xl">
                             <span class="text-amber-500 font-black text-[10px]">⚡ i.E.:</span>
-                            <select onchange="updateMatchValue(${pIdx}, ${matchId}, 'penaltyWinner', this.value)" class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg px-2 py-0.5 text-[11px] text-slate-900 dark:text-amber-400 font-black max-w-[100px] truncate focus:outline-none">
+                            <select onchange="updateMatchValue(${pIdx}, ${matchId}, 'penaltyWinner', this.value)" class="bg-white/80 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-lg px-2 py-0.5 text-[11px] text-slate-900 dark:text-amber-400 font-black max-w-[100px] truncate focus:outline-none">
                                 <option value="">--</option>
                                 <option value="t1" ${match.penaltyWinner==='t1'?'selected':''}>${t1Name}</option>
                                 <option value="t2" ${match.penaltyWinner==='t2'?'selected':''}>${t2Name}</option>
@@ -363,11 +357,11 @@
 
                 const container = document.getElementById("player-container-" + pIdx);
                 let html = `
-                    <div class="bg-slate-100/70 dark:bg-slate-900/60 p-4 rounded-3xl border border-slate-200/60 dark:border-slate-800/60 flex items-center justify-between gap-4 shadow-inner mb-2">
+                    <div class="bg-white/40 dark:bg-slate-900/40 backdrop-blur-xl p-4 rounded-3xl border border-white/60 dark:border-slate-800/60 flex items-center justify-between gap-4 shadow-sm mb-2">
                         <div class="flex-1">
                             <span class="block text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1">Dein Profilname</span>
                             <input type="text" id="player-name-field-${pIdx}" value="${player.name}" oninput="updatePlayerName(${pIdx}, this.value)" 
-                                class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl px-4 py-2.5 text-base font-bold text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500/50 w-full transition-all shadow-sm">
+                                class="bg-white/60 dark:bg-slate-950/50 border border-white/60 dark:border-slate-800/80 rounded-2xl px-4 py-2.5 text-base font-bold text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500/50 w-full transition-all shadow-sm">
                         </div>
                         <div class="bg-gradient-to-br from-emerald-500 to-teal-600 dark:from-emerald-600 dark:to-teal-700 h-[68px] px-5 rounded-2xl shadow-md flex flex-col justify-center items-center min-w-[90px] border border-emerald-400/20">
                             <span class="text-[9px] font-black text-emerald-100 uppercase tracking-wider">Score</span>
@@ -380,7 +374,7 @@
 
                 Object.keys(roundNames).forEach(rKey => {
                     const isActive = player.activeFilter === rKey;
-                    html += `<button onclick="setFilter(${pIdx}, '${rKey}')" class="inline-block px-5 py-2.5 rounded-2xl text-xs font-black transition-all cursor-pointer uppercase tracking-wider ${isActive ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-950 shadow-md scale-105' : 'bg-white dark:bg-slate-900/40 text-slate-500 dark:text-slate-400 border border-slate-200/80 dark:border-slate-800/80'}">${roundNames[rKey]}</button>`;
+                    html += `<button onclick="setFilter(${pIdx}, '${rKey}')" class="inline-block px-5 py-2.5 rounded-2xl text-xs font-black transition-all cursor-pointer uppercase tracking-wider ${isActive ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-950 shadow-md scale-105' : 'bg-white/60 dark:bg-slate-900/40 text-slate-500 dark:text-slate-400 border border-white/60 dark:border-slate-800/80'}">${roundNames[rKey]}</button>`;
                 });
 
                 html += `</div> <div class="space-y-4">`;
@@ -392,13 +386,13 @@
                     const isDraw = m.realHome !== '' && m.realAway !== '' && parseInt(m.realHome) === parseInt(m.realAway);
 
                     html += `
-                        <div class="bg-white dark:bg-slate-900 rounded-3xl p-5 border border-slate-200/80 dark:border-slate-800/80 shadow-sm space-y-4">
+                        <div class="bg-white/60 dark:bg-slate-900/40 backdrop-blur-xl rounded-3xl p-5 border border-white/60 dark:border-slate-800/50 shadow-sm space-y-4">
                             
-                            <div class="flex justify-between items-center text-[10px] uppercase font-bold tracking-widest text-slate-400 dark:text-slate-500 border-b border-slate-100 dark:border-slate-950 pb-2.5">
-                                <span class="bg-slate-100 dark:bg-slate-800/70 text-slate-700 dark:text-slate-400 px-2.5 py-1 rounded-lg border border-slate-200/40 dark:border-slate-700/30">Match #${m.id}</span>
+                            <div class="flex justify-between items-center text-[10px] uppercase font-bold tracking-widest text-slate-400 dark:text-slate-500 border-b border-slate-200/40 dark:border-slate-950 pb-2.5">
+                                <span class="bg-white/80 dark:bg-slate-800/70 text-slate-700 dark:text-slate-400 px-2.5 py-1 rounded-lg border border-white/60 dark:border-slate-700/30">Match #${m.id}</span>
                                 <span class="font-semibold text-slate-500 dark:text-slate-400">${m.date}</span>
                                 
-                                <span id="pts-badge-${pIdx}-${m.id}" class="px-2.5 py-1 rounded-lg font-black ${m.realHome !== '' && m.realAway !== '' ? (pts === 5 ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' : pts === 3 ? 'bg-blue-500/10 text-blue-500' : pts === 2 ? 'bg-yellow-500/10 text-yellow-600 dark:text-yellow-500' : 'bg-rose-500/10 text-rose-500') : 'text-slate-400 dark:text-slate-600 italic font-medium'}">
+                                <span id="pts-badge-${pIdx}-${m.id}" class="px-2.5 py-1 rounded-lg font-black ${m.realHome !== '' && m.realAway !== '' ? (pts === 5 ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20' : pts === 3 ? 'bg-blue-500/10 text-blue-500 border border-blue-500/20' : pts === 2 ? 'bg-yellow-500/10 text-yellow-600 dark:text-yellow-500 border border-yellow-500/20' : 'bg-rose-500/10 text-rose-500 border border-rose-500/20') : 'text-slate-400 dark:text-slate-600 italic font-medium'}">
                                     ${m.realHome !== '' && m.realAway !== '' ? `+${pts} Pkt.` : 'Offen'}
                                 </span>
                             </div>
@@ -415,39 +409,39 @@
                             </div>
                             
                             <div class="grid grid-cols-2 gap-3 pt-2">
-                                <div class="bg-slate-50 dark:bg-slate-950 p-3 rounded-2xl border border-slate-200/60 dark:border-slate-800/60 text-center flex flex-col items-center justify-center shadow-inner">
+                                <div class="bg-white/40 dark:bg-slate-950/40 p-3 rounded-2xl border border-white/60 dark:border-slate-800/60 text-center flex flex-col items-center justify-center shadow-inner">
                                     <span class="block text-[9px] uppercase font-black tracking-wider text-slate-400 dark:text-slate-500 mb-2">Dein Tipp</span>
                                     <div class="flex justify-center items-center gap-2 w-full">
-                                        <input type="number" id="input-${pIdx}-${m.id}-tipHome" pattern="[0-9]*" inputmode="numeric" min="0" max="99" placeholder="-" value="${m.tipHome !== undefined ? m.tipHome : ''}" oninput="handleLiveInput(this, ${pIdx}, ${m.id}, 'tipHome')" class="w-14 h-12 bg-white dark:bg-slate-900 text-slate-900 dark:text-amber-400 text-center rounded-xl font-black text-xl focus:outline-none border border-slate-200 dark:border-slate-800/80 focus:ring-2 focus:ring-amber-500/40 transition-all shadow-sm">
+                                        <input type="number" id="input-${pIdx}-${m.id}-tipHome" pattern="[0-9]*" inputmode="numeric" min="0" max="99" placeholder="-" value="${m.tipHome !== undefined ? m.tipHome : ''}" oninput="handleLiveInput(this, ${pIdx}, ${m.id}, 'tipHome')" class="w-14 h-12 bg-white/80 dark:bg-slate-900 text-slate-900 dark:text-amber-400 text-center rounded-xl font-black text-xl focus:outline-none border border-white/60 dark:border-slate-800 focus:ring-2 focus:ring-amber-500/40 transition-all shadow-sm">
                                         <span class="text-slate-300 dark:text-slate-700 font-black text-xl">:</span>
-                                        <input type="number" id="input-${pIdx}-${m.id}-tipAway" pattern="[0-9]*" inputmode="numeric" min="0" max="99" placeholder="-" value="${m.tipAway !== undefined ? m.tipAway : ''}" oninput="handleLiveInput(this, ${pIdx}, ${m.id}, 'tipAway')" class="w-14 h-12 bg-white dark:bg-slate-900 text-slate-900 dark:text-amber-400 text-center rounded-xl font-black text-xl focus:outline-none border border-slate-200 dark:border-slate-800/80 focus:ring-2 focus:ring-amber-500/40 transition-all shadow-sm">
+                                        <input type="number" id="input-${pIdx}-${m.id}-tipAway" pattern="[0-9]*" inputmode="numeric" min="0" max="99" placeholder="-" value="${m.tipAway !== undefined ? m.tipAway : ''}" oninput="handleLiveInput(this, ${pIdx}, ${m.id}, 'tipAway')" class="w-14 h-12 bg-white/80 dark:bg-slate-900 text-slate-900 dark:text-amber-400 text-center rounded-xl font-black text-xl focus:outline-none border border-white/60 dark:border-slate-800 focus:ring-2 focus:ring-amber-500/40 transition-all shadow-sm">
                                     </div>
                                 </div>
                                 
-                                <div class="bg-emerald-500/5 dark:bg-emerald-950/15 p-3 rounded-2xl border border-emerald-100 dark:border-emerald-900/40 text-center flex flex-col items-center justify-center">
+                                <div class="bg-emerald-500/5 dark:bg-emerald-950/15 p-3 rounded-2xl border border-emerald-100/60 dark:border-emerald-900/40 text-center flex flex-col items-center justify-center">
                                     <span class="block text-[9px] uppercase font-black tracking-wider text-emerald-600 dark:text-emerald-400 mb-2">Real</span>
                                     <div class="flex justify-center items-center gap-2 w-full">
-                                        <input type="number" id="input-${pIdx}-${m.id}-realHome" pattern="[0-9]*" inputmode="numeric" min="0" max="99" placeholder="-" value="${m.realHome !== undefined ? m.realHome : ''}" oninput="handleLiveInput(this, ${pIdx}, ${m.id}, 'realHome')" class="w-14 h-12 bg-white dark:bg-slate-900 text-slate-900 dark:text-emerald-500 text-center rounded-xl font-black text-xl focus:outline-none border border-slate-200 dark:border-slate-800/80 focus:ring-2 focus:ring-emerald-500/40 transition-all shadow-sm">
+                                        <input type="number" id="input-${pIdx}-${m.id}-realHome" pattern="[0-9]*" inputmode="numeric" min="0" max="99" placeholder="-" value="${m.realHome !== undefined ? m.realHome : ''}" oninput="handleLiveInput(this, ${pIdx}, ${m.id}, 'realHome')" class="w-14 h-12 bg-white/80 dark:bg-slate-900 text-slate-900 dark:text-emerald-500 text-center rounded-xl font-black text-xl focus:outline-none border border-white/60 dark:border-slate-800 focus:ring-2 focus:ring-emerald-500/40 transition-all shadow-sm">
                                         <span class="text-emerald-200 dark:text-emerald-900/60 font-black text-xl">:</span>
-                                        <input type="number" id="input-${pIdx}-${m.id}-realAway" pattern="[0-9]*" inputmode="numeric" min="0" max="99" placeholder="-" value="${m.realAway !== undefined ? m.realAway : ''}" oninput="handleLiveInput(this, ${pIdx}, ${m.id}, 'realAway')" class="w-14 h-12 bg-white dark:bg-slate-900 text-slate-900 dark:text-emerald-500 text-center rounded-xl font-black text-xl focus:outline-none border border-slate-200 dark:border-slate-800/80 focus:ring-2 focus:ring-emerald-500/40 transition-all shadow-sm">
+                                        <input type="number" id="input-${pIdx}-${m.id}-realAway" pattern="[0-9]*" inputmode="numeric" min="0" max="99" placeholder="-" value="${m.realAway !== undefined ? m.realAway : ''}" oninput="handleLiveInput(this, ${pIdx}, ${m.id}, 'realAway')" class="w-14 h-12 bg-white/80 dark:bg-slate-900 text-slate-900 dark:text-emerald-500 text-center rounded-xl font-black text-xl focus:outline-none border border-white/60 dark:border-slate-800 focus:ring-2 focus:ring-emerald-500/40 transition-all shadow-sm">
                                     </div>
                                 </div>
                             </div>
                             
-                            <div class="pt-3 border-t border-slate-100 dark:border-slate-950 flex items-center justify-between gap-2 text-xs">
+                            <div class="pt-3 border-t border-slate-200/40 dark:border-slate-950 flex items-center justify-between gap-2 text-xs">
                                 <div class="flex items-center gap-2">
                                     <span class="text-[9px] uppercase font-black tracking-widest text-slate-400">Progression:</span>
-                                    <div class="inline-flex rounded-xl p-0.5 bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800">
+                                    <div class="inline-flex rounded-xl p-0.5 bg-white/60 dark:bg-slate-950 border border-white/60 dark:border-slate-800">
                                         <button onclick="updateMatchValue(${pIdx}, ${m.id}, 'mode', 'auto')" class="px-2.5 py-1 text-[9px] uppercase font-black rounded-lg cursor-pointer transition-all ${m.mode !== 'manual' ? 'bg-white dark:bg-slate-800 text-slate-950 dark:text-white shadow-sm' : 'text-slate-400 dark:text-slate-500'}">Auto</button>
                                         <button onclick="updateMatchValue(${pIdx}, ${m.id}, 'mode', 'manual')" class="px-2.5 py-1 text-[9px] uppercase font-black rounded-lg cursor-pointer transition-all ${m.mode === 'manual' ? 'bg-white dark:bg-slate-800 text-slate-950 dark:text-white shadow-sm' : 'text-slate-400 dark:text-slate-500'}">Man.</button>
                                     </div>
                                 </div>
                                 <div id="extra-ctrl-${pIdx}-${m.id}" class="text-[11px] max-w-[55%] truncate">
                                     ${m.mode === 'manual' ? `
-                                        <div class="flex items-center gap-1.5 bg-amber-500/5 px-2 py-1 rounded-xl border border-amber-500/10"><span class="text-amber-600 dark:text-amber-400 font-bold text-[10px]">Gewinner:</span><select onchange="updateMatchValue(${pIdx}, ${m.id}, 'manualWinner', this.value)" class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg px-2 py-0.5 text-[11px] text-slate-900 dark:text-amber-400 font-black max-w-[120px] truncate focus:outline-none"><option value="">--</option><option value="t1" ${m.manualWinner==='t1'?'selected':''}>${t1Name}</option><option value="t2" ${m.manualWinner==='t2'?'selected':''}>${t2Name}</option></select></div>
+                                        <div class="flex items-center gap-1.5 bg-amber-500/5 px-2 py-1 rounded-xl border border-amber-500/10"><span class="text-amber-600 dark:text-amber-400 font-bold text-[10px]">Gewinner:</span><select onchange="updateMatchValue(${pIdx}, ${m.id}, 'manualWinner', this.value)" class="bg-white/80 dark:bg-slate-900/80 border border-white/60 dark:border-slate-800 rounded-lg px-2 py-0.5 text-[11px] text-slate-900 dark:text-amber-400 font-black max-w-[120px] truncate focus:outline-none"><option value="">--</option><option value="t1" ${m.manualWinner==='t1'?'selected':''}>${t1Name}</option><option value="t2" ${m.manualWinner==='t2'?'selected':''}>${t2Name}</option></select></div>
                                     ` : `
                                         ${isDraw ? `
-                                            <div class="flex items-center gap-1.5 bg-amber-500/10 border border-amber-500/20 px-2 py-1 rounded-xl"><span class="text-amber-500 font-black text-[10px]">⚡ i.E.:</span><select onchange="updateMatchValue(${pIdx}, ${m.id}, 'penaltyWinner', this.value)" class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg px-2 py-0.5 text-[11px] text-slate-900 dark:text-amber-400 font-black max-w-[100px] truncate focus:outline-none"><option value="">--</option><option value="t1" ${m.penaltyWinner==='t1'?'selected':''}>${t1Name}</option><option value="t2" ${m.penaltyWinner==='t2'?'selected':''}>${t2Name}</option></select></div>
+                                            <div class="flex items-center gap-1.5 bg-amber-500/10 border border-amber-500/20 px-2 py-1 rounded-xl"><span class="text-amber-500 font-black text-[10px]">⚡ i.E.:</span><select onchange="updateMatchValue(${pIdx}, ${m.id}, 'penaltyWinner', this.value)" class="bg-white/80 dark:bg-slate-900/80 border border-white/60 dark:border-slate-800 rounded-lg px-2 py-0.5 text-[11px] text-slate-900 dark:text-amber-400 font-black max-w-[100px] truncate focus:outline-none"><option value="">--</option><option value="t1" ${m.penaltyWinner==='t1'?'selected':''}>${t1Name}</option><option value="t2" ${m.penaltyWinner==='t2'?'selected':''}>${t2Name}</option></select></div>
                                         ` : ''}
                                     `}
                                 </div>
